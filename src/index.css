@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-cairo: 'Cairo', system-ui, -apple-system, sans-serif;
+    --font-amiri: 'Amiri', serif;
+    --font-cinzel: 'Cinzel', serif;
+    --gold-glow: 0 0 25px rgba(212, 175, 55, 0.45);
+    --gold-glow-intense: 0 0 45px rgba(243, 229, 171, 0.7);
+  }
+
+  body {
+    font-family: var(--font-cairo);
+  }
+}
+
+.font-editorial {
+  font-family: var(--font-amiri);
+}
+
+.font-cinzel {
+  font-family: var(--font-cinzel);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #FFF6D6 0%, #E6C265 30%, #C49733 70%, #F5E29F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border {
+  border-image: linear-gradient(135deg, rgba(243,229,171,0.8), rgba(184,134,11,0.3), rgba(212,175,55,0.8)) 1;
+}
+
+.gold-box-glow {
+  box-shadow: 0 0 35px -5px rgba(212, 175, 55, 0.28), 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+.gold-box-glow-lg {
+  box-shadow: 0 0 60px -10px rgba(212, 175, 55, 0.45), 0 20px 40px rgba(0, 0, 0, 0.9);
+}
+
+.glass-luxury {
+  background: rgba(10, 10, 14, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.glass-luxury-card {
+  background: linear-gradient(145deg, rgba(17, 17, 24, 0.85) 0%, rgba(9, 9, 12, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* 3D Book perspective styles */
+.perspective-1000 {
+  perspective: 1200px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.book-shadow {
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(212, 175, 55, 0.25);
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 4s ease-in-out infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #08080a;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.7);
+}

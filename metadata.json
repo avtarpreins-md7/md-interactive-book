@@ -1,0 +1,6 @@
+{
+  "name": "MD Interactive Book Experience",
+  "description": "تجربة سينمائية تفاعلية لكتاب مجموعة MD مع مشهد البحر الأسود الذهبي وتقليب الصفحات وحفظ التقدم وبث آراء القراء المباشرة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
