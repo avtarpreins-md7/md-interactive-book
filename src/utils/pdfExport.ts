@@ -1,9 +1,18 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * 
+ * Luxury PDF Export Document Generator
+ * Title: "نون"
+ * Author: "محمد الهمام"
+ * Strictly enforces Rule 4: Front cover has NO MD or MD7!
+ * Back cover allows MD with unified QR code and dark brown MD2.
+ */
+
 import { BOOK_PAGES } from '../data/bookContent';
 import { MD7_APPS } from '../data/md7Apps';
+import { BOOK_STRUCTURE_CONFIG } from '../data/bookStructureConfig';
 
-/**
- * Generates and triggers download/viewing of the luxury MD Group Book PDF document
- */
 export function exportBookPDF(): Promise<boolean> {
   return new Promise((resolve) => {
     try {
@@ -12,7 +21,7 @@ export function exportBookPDF(): Promise<boolean> {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>MD Group Luxury Architecture Monograph - الكتاب الرقمي الفاخر</title>
+  <title>كتاب «نون» - تأليف محمد الهمام</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
   <style>
     @page {
@@ -28,6 +37,7 @@ export function exportBookPDF(): Promise<boolean> {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+    /* Front Cover - Strictly NO MD / MD7 */
     .cover {
       page-break-after: always;
       height: 90vh;
@@ -41,50 +51,41 @@ export function exportBookPDF(): Promise<boolean> {
       box-sizing: border-box;
       background: radial-gradient(circle at center, #181822 0%, #08080a 100%);
     }
-    .emblem {
-      font-family: 'Cinzel', serif;
-      font-size: 4rem;
-      letter-spacing: 0.25em;
-      color: #F3E5AB;
-      text-shadow: 0 0 30px rgba(212,175,55,0.8);
-      margin: 1.5rem 0;
+    .cover-emblem {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
       border: 2px solid #D4AF37;
-      padding: 0.8rem 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: #D4AF37;
+      margin: 1.5rem 0;
+      background: #111;
+      box-shadow: 0 0 25px rgba(212,175,55,0.4);
     }
     .cover h1 {
-      font-size: 2.5rem;
+      font-size: 2.4rem;
       color: #FFF6D6;
       margin: 0 0 0.5rem;
+      font-weight: 900;
     }
     .cover h2 {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       color: #D4AF37;
-      font-weight: 400;
-      letter-spacing: 0.08em;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
     }
-    .apps-box {
-      width: 100%;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(212,175,55,0.35);
-      border-radius: 4px;
-      padding: 1rem;
-      text-align: right;
-      margin: 1.5rem 0;
-    }
-    .apps-box-title {
+    .cover .author-badge {
+      font-size: 1.25rem;
+      color: #FFFFFF;
       font-weight: bold;
-      color: #D4AF37;
-      font-size: 0.95rem;
-      margin-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(212,175,55,0.2);
-      padding-bottom: 0.3rem;
-    }
-    .app-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.4rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      font-size: 0.85rem;
+      border-top: 1px solid rgba(212,175,55,0.5);
+      border-bottom: 1px solid rgba(212,175,55,0.5);
+      padding: 0.5rem 2rem;
+      margin-top: 1rem;
     }
     .page {
       page-break-after: always;
@@ -114,7 +115,7 @@ export function exportBookPDF(): Promise<boolean> {
     }
     .page-image {
       width: 100%;
-      max-height: 340px;
+      max-height: 320px;
       object-fit: cover;
       border: 1px solid #D4AF37;
       margin: 1rem 0;
@@ -132,7 +133,7 @@ export function exportBookPDF(): Promise<boolean> {
     }
     .prose p {
       font-size: 0.95rem;
-      line-height: 1.75;
+      line-height: 1.8;
       color: #E2E8F0;
       margin-bottom: 0.8rem;
       text-align: justify;
@@ -140,149 +141,207 @@ export function exportBookPDF(): Promise<boolean> {
     .specs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.8rem;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(212,175,55,0.2);
+      gap: 1rem;
+      margin-top: 1.5rem;
       padding: 0.8rem;
-      margin-top: 1.2rem;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(212,175,55,0.25);
+      border-radius: 4px;
     }
     .spec-item {
-      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
     }
     .spec-label {
-      color: #A0AEC0;
-      display: block;
-    }
-    .spec-value {
-      color: #F3E5AB;
-      font-weight: 700;
-      margin-top: 0.2rem;
-    }
-    .page-footer {
-      position: absolute;
-      bottom: 1rem;
-      left: 2rem;
-      right: 2rem;
-      display: flex;
-      justify-content: space-between;
       font-size: 0.75rem;
-      color: #718096;
-      border-top: 1px solid rgba(212,175,55,0.2);
-      padding-top: 0.4rem;
+      color: #94A3B8;
     }
-    @media print {
-      body {
-        padding: 0;
-        background: #08080a;
-      }
-      .page, .cover {
-        box-shadow: none;
-      }
+    .spec-val {
+      font-size: 0.85rem;
+      color: #D4AF37;
+      font-weight: bold;
+    }
+    /* Back Cover */
+    .back-cover {
+      page-break-after: avoid;
+      height: 90vh;
+      border: 3px double #D4AF37;
+      padding: 2.5rem;
+      box-sizing: border-box;
+      background: radial-gradient(circle at center, #151520 0%, #060608 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+    }
+    .node-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+      width: 100%;
+      max-width: 450px;
+    }
+    .node-card {
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(212,175,55,0.3);
+      padding: 0.8rem;
+      border-radius: 6px;
+      text-align: right;
+    }
+    .node-md2 {
+      border-color: #8C5D30;
+      background: rgba(45, 25, 10, 0.6);
+    }
+    .node-badge {
+      font-weight: bold;
+      color: #D4AF37;
+      font-size: 0.85rem;
+    }
+    .node-md2 .node-badge {
+      color: #C5A059;
+    }
+    .qr-box {
+      border: 2px solid #D4AF37;
+      padding: 1rem;
+      background: #000;
+      display: inline-block;
+      margin: 1rem 0;
     }
   </style>
 </head>
 <body>
-  <!-- COVER -->
+
+  <!-- FRONT COVER (Strictly NO MD / MD7) -->
   <div class="cover">
     <div>
-      <div class="emblem">MD</div>
-      <h1>مجموعة MD المعمارية</h1>
-      <h2>الأفق المعماري الجديد · THE NEW ARCHITECTURAL HORIZON</h2>
+      <div style="font-size: 0.85rem; letter-spacing: 0.2em; color: #D4AF37;">إصدار توثيقي فلسفي حصري</div>
+      <div class="cover-emblem">ن</div>
     </div>
-
-    <!-- MD7 Ecosystem Apps Box -->
-    <div class="apps-box">
-      <div class="apps-box-title">منظومة وتطبيقات مجموعة MD7 الرقمية:</div>
-      ${MD7_APPS.map(
-        (app) => `
-        <div class="app-item">
-          <span style="color: #FFF; font-weight: 600;">${app.name} (${app.badge})</span>
-          <span style="color: #D4AF37; font-family: monospace;">${app.url}</span>
-        </div>
-      `
-      ).join('')}
+    <div>
+      <h1 style="font-size: 3rem; margin-bottom: 0.2rem; color: #FFF6D6;">«${BOOK_STRUCTURE_CONFIG.frontCover.title}»</h1>
+      <div class="author-badge">تأليف: ${BOOK_STRUCTURE_CONFIG.author}</div>
+      <p style="font-size: 0.95rem; color: #E2E8F0; max-width: 500px; margin: 1.5rem auto 0; font-family: 'Amiri', serif;">
+        «ن والقلم وما يسطرون · البداية الأزلية لكل فكرة خالدة تتحول إلى أثر حقيقي»
+      </p>
     </div>
-
-    <div style="color: #A0AEC0; font-size: 0.85rem;">
-      الإصدار التوثيقي الحصري لعام 2026 · الفخامة السوداء والذهب الخالص
+    <div style="font-size: 0.8rem; color: #94A3B8; border-top: 1px solid rgba(212,175,55,0.3); width: 80%; padding-top: 0.8rem;">
+      تاريخ الإتاحة الرسمية: 11 نوفمبر 2026 · توقيت القاهرة
     </div>
   </div>
 
   <!-- BOOK PAGES -->
-  ${BOOK_PAGES.map(
-    (page) => `
+  ${BOOK_PAGES.filter(p => p.id > 1 && p.id < BOOK_PAGES.length).map(page => `
     <div class="page">
       <div class="page-header">
-        <span>${page.chapter || 'مجموعة MD'}</span>
+        <span>${page.chapter || BOOK_STRUCTURE_CONFIG.projectTitle}</span>
         <span>صفحة ${page.pageNumber}</span>
       </div>
       <h3>${page.title}</h3>
-      ${page.subtitle ? `<p style="color: #D4AF37; font-size: 0.9rem; margin-top: -0.4rem;">${page.subtitle}</p>` : ''}
+      ${page.subtitle ? `<div style="font-size: 0.95rem; color: #D4AF37; margin-bottom: 0.8rem;">${page.subtitle}</div>` : ''}
       
-      ${page.image ? `<img src="${page.image}" class="page-image" alt="${page.title}" />` : ''}
-      ${page.imageCaption ? `<p style="font-size: 0.8rem; color: #A0AEC0; margin-top: -0.4rem; font-style: italic;">${page.imageCaption}</p>` : ''}
-      
+      ${page.image ? `
+        <img class="page-image" src="${page.image}" alt="${page.title}" />
+        ${page.imageCaption ? `<div style="font-size: 0.8rem; color: #CBD5E1; margin-bottom: 1rem; font-style: italic;">${page.imageCaption}</div>` : ''}
+      ` : ''}
+
       ${page.quote ? `<div class="quote">${page.quote}</div>` : ''}
-      
+
       <div class="prose">
-        ${page.content.map((p) => `<p>${p}</p>`).join('')}
+        ${page.content.map(para => `<p>${para}</p>`).join('')}
       </div>
 
-      ${
-        page.specs
-          ? `
+      ${page.specs ? `
         <div class="specs">
-          ${page.specs
-            .map(
-              (s) => `
+          ${page.specs.map(s => `
             <div class="spec-item">
               <span class="spec-label">${s.label}</span>
-              <span class="spec-value">${s.value}</span>
+              <span class="spec-val">${s.value}</span>
             </div>
-          `
-            )
-            .join('')}
+          `).join('')}
         </div>
-      `
-          : ''
-      }
+      ` : ''}
+    </div>
+  `).join('')}
 
-      <div class="page-footer">
-        <span>MD GROUP LUXURY EDITION</span>
-        <span>صفحة ${page.pageNumber} من ${BOOK_PAGES.length}</span>
+  <!-- BACK COVER (MD allowed with dark brown MD2) -->
+  <div class="back-cover">
+    <div>
+      <div style="font-size: 0.85rem; letter-spacing: 0.2em; color: #D4AF37;">MD UNIFIED ECOSYSTEM</div>
+      <h2 style="color: #FFF; font-size: 1.8rem; margin: 0.5rem 0;">منظومة الصروح والتحول الرقمي</h2>
+      <p style="font-size: 0.9rem; color: #CBD5E1; max-width: 480px; margin: 0 auto;">
+        بوابة موحدة تربط الرؤية الفكرية والتوثيقية بتطبيقات ومنصات المنظومة السحابية
+      </p>
+    </div>
+
+    <!-- Node Constellation -->
+    <div class="node-grid">
+      <div class="node-card">
+        <div class="node-badge">MD1 · الرؤية والابتكار</div>
+        <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.2rem;">توليد الأفكار والاستراتيجيات المستقبلية</div>
+      </div>
+      <div class="node-card node-md2">
+        <div class="node-badge" style="color: #dfc287;">MD2 · الإدارة والحوكمة (بني ذهبي)</div>
+        <div style="font-size: 0.75rem; color: #CBD5E1; margin-top: 0.2rem;">القيادة المؤسسية والتنظيم المعتمد</div>
+      </div>
+      <div class="node-card">
+        <div class="node-badge">MD3 · التطوير والتنفيذ</div>
+        <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.2rem;">التطبيقات والمنصات التفاعلية المباشرة</div>
+      </div>
+      <div class="node-card">
+        <div class="node-badge">MD4 · الاستدامة والمستقبل</div>
+        <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.2rem;">الطاقة النظيفة والواقع الافتراضي</div>
       </div>
     </div>
-  `
-  ).join('')}
+
+    <!-- QR Code & Link -->
+    <div>
+      <div class="qr-box">
+        <div style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; margin-bottom: 0.3rem;">[ QR CODE ]</div>
+        <div style="font-family: monospace; font-size: 0.85rem; color: #FFF;">md7-group.ai.studio</div>
+      </div>
+      <div style="font-weight: bold; color: #D4AF37; font-size: 0.95rem; margin-top: 0.5rem;">
+        ${BOOK_STRUCTURE_CONFIG.backCover.footerText}
+      </div>
+    </div>
+
+    <div style="font-size: 0.8rem; color: #64748B;">
+      كتاب «نون» · تأليف: محمد الهمام · جميع الحقوق محفوظة © 2026
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    };
+  </script>
 </body>
 </html>
       `;
 
       const printWindow = window.open('', '_blank');
       if (printWindow) {
+        printWindow.document.open();
         printWindow.document.write(htmlContent);
         printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          try {
-            printWindow.print();
-          } catch {}
-          resolve(true);
-        }, 500);
+        resolve(true);
       } else {
-        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'MD_Group_Luxury_Book_Edition_2026.html';
+        a.download = 'كتاب_نون_محمد_الهمام.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         resolve(true);
       }
-    } catch (err) {
-      console.error('PDF export error:', err);
+    } catch (e) {
+      console.error('PDF export error:', e);
       resolve(false);
     }
   });

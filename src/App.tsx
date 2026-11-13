@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { GoldenOceanScene } from './components/GoldenOceanScene';
 import { BookHolder } from './components/BookHolder';
 import { BookReader } from './components/BookReader';
@@ -12,14 +12,77 @@ import { ResumeReadingModal } from './components/ResumeReadingModal';
 import { ReviewModal } from './components/ReviewModal';
 import { MD7AppsModal } from './components/MD7AppsModal';
 import { PublishBookModal } from './components/PublishBookModal';
+import { BookLaunchCountdown } from './components/BookLaunchCountdown';
+import { AuthorAccessModal } from './components/AuthorAccessModal';
+import { AuthorPreviewBanner } from './components/AuthorPreviewBanner';
 import { INITIAL_REVIEWS } from './data/bookContent';
+import { BOOK_STRUCTURE_CONFIG } from './data/bookStructureConfig';
 import { ReaderReview, ReadingProgress } from './types';
 import { audioEngine } from './utils/audioEngine';
 
-type ActiveScreen = 'ocean' | 'pedestal' | 'reader' | 'completion';
+type ActiveScreen = 'countdown' | 'ocean' | 'pedestal' | 'reader' | 'completion';
 
 export default function App() {
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('ocean');
+  const [, startTransition] = useTransition();
+
+  // Check launch time: 11 November 2026, 11:11 PM Cairo Time (UTC+2 => 21:11:00Z)
+  const targetLaunchTimestamp = new Date(BOOK_STRUCTURE_CONFIG.targetLaunchCairo).getTime();
+  
+  // Real time vs target check
+  const [isNaturallyLaunched, setIsNaturallyLaunched] = useState<boolean>(() => {
+    return Date.now() >= targetLaunchTimestamp;
+  });
+
+  // Dedicated Author Preview Mode for Mohamed El-Hammam
+  // Authenticated securely via server token - NO query string bypass allowed!
+  const [isAuthorPreview, setIsAuthorPreview] = useState<boolean>(false);
+  const [showAuthorModal, setShowAuthorModal] = useState<boolean>(false);
+
+  // Validate server-side author session on mount
+  useEffect(() => {
+    const verifyStoredSession = async () => {
+      try {
+        const storedToken = sessionStorage.getItem('noon_author_token');
+        if (!storedToken) return;
+
+        const res = await fetch('/api/author/verify-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${storedToken}`
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.valid) {
+            setIsAuthorPreview(true);
+            setActiveScreen((prev) => (prev === 'countdown' ? 'pedestal' : prev));
+          } else {
+            sessionStorage.removeItem('noon_author_token');
+            setIsAuthorPreview(false);
+          }
+        } else {
+          sessionStorage.removeItem('noon_author_token');
+          setIsAuthorPreview(false);
+        }
+      } catch (e) {
+        console.warn('Session verification fallback', e);
+      }
+    };
+
+    verifyStoredSession();
+  }, []);
+
+  // Accessible if officially launched OR if the author is authenticated in preview mode
+  const isAccessible = isNaturallyLaunched || isAuthorPreview;
+
+  // Active Screen state
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>(() => {
+    if (Date.now() >= targetLaunchTimestamp) return 'ocean';
+    return 'countdown';
+  });
+
   const [readingPage, setReadingPage] = useState<number>(1);
   const [savedProgress, setSavedProgress] = useState<ReadingProgress | null>(null);
   const [showResumeModal, setShowResumeModal] = useState<boolean>(false);
@@ -39,13 +102,37 @@ export default function App() {
     return INITIAL_REVIEWS;
   });
 
-  // Check saved progress on initial mount
+  // Watch real-time clock to trigger launch automatically at 11:11 PM Cairo time
+  useEffect(() => {
+    const checkTimer = () => {
+      if (Date.now() >= targetLaunchTimestamp && !isNaturallyLaunched) {
+        setIsNaturallyLaunched(true);
+        audioEngine.playGoldenChime();
+        if (activeScreen === 'countdown') {
+          setActiveScreen('ocean');
+        }
+      }
+    };
+
+    checkTimer();
+    const interval = setInterval(checkTimer, 1000);
+    return () => clearInterval(interval);
+  }, [targetLaunchTimestamp, isNaturallyLaunched, activeScreen]);
+
+  // Gatekeeper Enforcement: Ensure direct navigation cannot bypass launch date for ordinary visitors
+  useEffect(() => {
+    if (!isAccessible && activeScreen !== 'countdown') {
+      setActiveScreen('countdown');
+    }
+  }, [isAccessible, activeScreen]);
+
+  // Check saved progress on initial mount (only if accessible)
   useEffect(() => {
     try {
       const stored = localStorage.getItem('md_book_progress');
       if (stored) {
         const parsed: ReadingProgress = JSON.parse(stored);
-        if (parsed.currentPage > 1 && !parsed.isCompleted) {
+        if (parsed.currentPage > 1 && !parsed.isCompleted && isAccessible) {
           setSavedProgress(parsed);
           setShowResumeModal(true);
         }
@@ -53,7 +140,7 @@ export default function App() {
     } catch (e) {
       console.warn('Error reading saved progress', e);
     }
-  }, []);
+  }, [isAccessible]);
 
   // Save reviews to localStorage when updated
   useEffect(() => {
@@ -77,9 +164,34 @@ export default function App() {
     setReviews((prev) => [newRev, ...prev]);
   };
 
+  // Author Preview Mode Activation with server token
+  const handleConfirmAuthor = (token: string) => {
+    try {
+      sessionStorage.setItem('noon_author_token', token);
+    } catch {}
+    setIsAuthorPreview(true);
+    setActiveScreen('pedestal');
+  };
+
+  // Author Exit Preview Mode
+  const handleExitAuthorPreview = () => {
+    try {
+      sessionStorage.removeItem('noon_author_token');
+    } catch {}
+    setIsAuthorPreview(false);
+    setActiveScreen('countdown');
+  };
+
+  // Natural Launch Trigger (Automatic upon clock arrival)
+  const handleNaturalLaunchUnlock = () => {
+    setIsNaturallyLaunched(true);
+    audioEngine.playGoldenChime();
+    setActiveScreen('ocean');
+  };
+
   // Resume Reading Handler
   const handleResume = () => {
-    if (savedProgress) {
+    if (savedProgress && isAccessible) {
       setReadingPage(savedProgress.currentPage);
       setActiveScreen('reader');
       setShowResumeModal(false);
@@ -94,13 +206,35 @@ export default function App() {
       localStorage.removeItem('md_book_progress');
     } catch {}
     setShowResumeModal(false);
-    setActiveScreen('ocean');
+    setActiveScreen(isAccessible ? 'ocean' : 'countdown');
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-[#F3E5AB] font-sans antialiased overflow-x-hidden">
+    <div className={`relative min-h-screen bg-[#050505] text-[#F3E5AB] font-sans antialiased overflow-x-hidden ${isAuthorPreview && activeScreen !== 'countdown' ? 'pt-10' : ''}`}>
+      {/* Author Preview Mode Luxury Ribbon */}
+      {isAuthorPreview && activeScreen !== 'countdown' && (
+        <AuthorPreviewBanner
+          onExitPreview={handleExitAuthorPreview}
+          currentScreen={activeScreen}
+          onNavigateScreen={(scr) => {
+            startTransition(() => {
+              setActiveScreen(scr);
+            });
+          }}
+        />
+      )}
+
+      {/* Screen 0: Pre-Launch Gatekeeper & Countdown (Active before 11:11 PM Cairo Time) */}
+      {activeScreen === 'countdown' && (
+        <BookLaunchCountdown
+          onLaunchUnlock={handleNaturalLaunchUnlock}
+          onOpenAuthorModal={() => setShowAuthorModal(true)}
+          onOpenAppsModal={() => setShowAppsModal(true)}
+        />
+      )}
+
       {/* Screen 1: The Golden Black Sea & Noon letter */}
-      {activeScreen === 'ocean' && (
+      {activeScreen === 'ocean' && isAccessible && (
         <GoldenOceanScene
           onEnterJourney={() => {
             setActiveScreen('pedestal');
@@ -111,7 +245,7 @@ export default function App() {
       )}
 
       {/* Screen 2: 3D Book Holder & Pedestal */}
-      {activeScreen === 'pedestal' && (
+      {activeScreen === 'pedestal' && isAccessible && (
         <BookHolder
           onOpenBook={() => {
             setActiveScreen('reader');
@@ -123,8 +257,8 @@ export default function App() {
         />
       )}
 
-      {/* Screen 3: Interactive Book Reader */}
-      {activeScreen === 'reader' && (
+      {/* Screen 3: Interactive Book Reader (All 21 Pages Unabbreviated + Glossary + Back Cover) */}
+      {activeScreen === 'reader' && isAccessible && (
         <BookReader
           initialPage={readingPage}
           onCloseBook={() => {
@@ -141,7 +275,7 @@ export default function App() {
       )}
 
       {/* Screen 4: Completion & Legacy Manifesto */}
-      {activeScreen === 'completion' && (
+      {activeScreen === 'completion' && isAccessible && (
         <CompletionScreen
           onRestart={() => {
             setReadingPage(1);
@@ -158,8 +292,15 @@ export default function App() {
         />
       )}
 
+      {/* Author Access Modal */}
+      <AuthorAccessModal
+        isOpen={showAuthorModal}
+        onClose={() => setShowAuthorModal(false)}
+        onConfirmAuthor={handleConfirmAuthor}
+      />
+
       {/* Resume Previous Progress Modal */}
-      {savedProgress && (
+      {savedProgress && isAccessible && (
         <ResumeReadingModal
           isOpen={showResumeModal}
           progress={savedProgress}

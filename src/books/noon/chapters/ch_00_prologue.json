@@ -1,0 +1,30 @@
+{
+  "id": "prologue",
+  "partId": "front",
+  "partTitle": "مقدمة واستهلال",
+  "order": 1,
+  "displayNumber": "استهلال",
+  "title": "استهلال: نقطة في بحر",
+  "subtitle": "ن · نقطة في بحر · سطرت عبر قلم · وصفت علم معرفة حكمة",
+  "author": "محمد الهمام",
+  "sourcePages": "1 (الأسطر الأربعة الأولى)",
+  "sourceWordCount": 11,
+  "copiedWordCount": 11,
+  "status": "محذوف بإذني",
+  "isAlternateVersion": false,
+  "kind": "prologue",
+  "image": "/books/noon/cover.png",
+  "imagePrompt": "غلاف كتاب نون الرسمي: بحر أسود وأمواج بحواف ذهبية وهلال نون الكوني.",
+  "noteUnderImage": "نبذة تفسيرية: الأسطر الافتتاحية الأربعة للكتاب كما وردت في مستهل المخطوط الأصلي.",
+  "quotes": [],
+  "deletions": [
+    {
+      "sourcePage": "1",
+      "deletedWordCount": 293,
+      "reason": "حذف ملاحظات التخطيط وصياغة الفصول الأولية أسفل صفحة 1 والإبقاء على الأسطر الأربعة الافتتاحية فقط (بإذن المؤلف)."
+    }
+  ],
+  "paragraphs": [
+    "ن نقطة في بحر سطرت عبر قلم وصفت علم معرفة حكمة"
+  ]
+}

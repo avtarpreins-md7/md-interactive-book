@@ -239,12 +239,12 @@ export const GoldenOceanScene: React.FC<GoldenOceanSceneProps> = ({
       <header className="relative z-20 w-full max-w-6xl mx-auto px-6 pt-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-sm border border-amber-400/60 flex items-center justify-center bg-black/60 backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-            <span className="font-cinzel text-amber-300 font-bold text-sm tracking-wider">MD</span>
+            <span className="font-editorial text-amber-300 font-bold text-lg">ن</span>
           </div>
           <div>
-            <span className="text-sm font-semibold tracking-wide text-white">مجموعة MD المعمارية</span>
+            <span className="text-sm font-semibold tracking-wide text-white">كتاب «نون»</span>
             <span className="mx-2 text-amber-500/50">·</span>
-            <span className="text-xs text-amber-200/60 font-cinzel">LUXURY MONOGRAPH</span>
+            <span className="text-xs text-amber-200/60 font-cinzel">تأليف: محمد الهمام</span>
           </div>
         </div>
 
@@ -355,7 +355,7 @@ export const GoldenOceanScene: React.FC<GoldenOceanSceneProps> = ({
         </button>
 
         <p className="mt-3 text-[11px] text-zinc-400/80">
-          انغمس في عالم العمارة الفاخرة واستكشف تفاصيل صروح مجموعة MD
+          انغمس في رحلة الوعي والمعرفة الفلسفية واستكشف فصول كتاب «نون»
         </p>
       </div>
     </div>

@@ -22,6 +22,13 @@ import { ReviewModal } from './ReviewModal';
 import { ReadingProgress, ReaderReview } from '../types';
 import { audioEngine } from '../utils/audioEngine';
 import { exportBookPDF } from '../utils/pdfExport';
+import { BackCoverView } from './BackCoverView';
+import { BOOK_STRUCTURE_CONFIG } from '../data/bookStructureConfig';
+
+const toArabicIndicDigits = (num: number): string => {
+  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return num.toString().replace(/\d/g, (d) => digits[parseInt(d, 10)]);
+};
 
 interface BookReaderProps {
   initialPage?: number;
@@ -204,8 +211,8 @@ export const BookReader: React.FC<BookReaderProps> = ({
             <span className="hidden sm:inline">إغلاق الكتاب</span>
           </button>
           <span className="text-zinc-600">·</span>
-          <span className="font-cinzel text-xs text-amber-400 font-bold tracking-wider">
-            MD MONOGRAPH
+          <span className="font-editorial text-xs text-amber-300 font-bold tracking-wide">
+            {BOOK_STRUCTURE_CONFIG.projectTitle}
           </span>
         </div>
 
@@ -341,7 +348,7 @@ export const BookReader: React.FC<BookReaderProps> = ({
             <div className="relative z-20 px-4 py-2 bg-black/40 backdrop-blur-md border-b border-amber-400/20 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
                 <span className="font-bold text-amber-400">
-                  {currentContent.chapter || 'مجموعة MD'}
+                  {currentContent.chapter || 'كتاب «نون»'}
                 </span>
                 <span className="text-zinc-600">·</span>
                 <span className="text-zinc-400">
@@ -376,10 +383,10 @@ export const BookReader: React.FC<BookReaderProps> = ({
             <div className="relative z-10 px-6 sm:px-8 pt-4 pb-2 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300/80">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-amber-400 font-editorial text-sm">
-                  {currentContent.chapter || 'مجموعة MD'}
+                  {currentContent.chapter || 'كتاب «نون»'}
                 </span>
                 <span className="text-zinc-600">·</span>
-                <span className="text-zinc-400 font-cinzel text-[11px]">ARCHITECTURAL MONOGRAPH</span>
+                <span className="text-zinc-400 font-cinzel text-[11px]">DOCUMENTARY MONOGRAPH</span>
               </div>
               <div className="font-mono text-amber-300 font-bold">
                 صفحة {currentContent.pageNumber}
@@ -388,84 +395,185 @@ export const BookReader: React.FC<BookReaderProps> = ({
           )}
 
           {/* Book Page Content Body */}
-          <div className="relative z-10 flex-1 px-6 sm:px-12 py-4 overflow-y-auto">
-            {/* Title & Subtitle */}
-            <div className="mb-4">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-wide border-r-4 border-amber-400 pr-3">
-                {currentContent.title}
-              </h2>
-              {currentContent.subtitle && (
-                <p className="mt-1 text-xs sm:text-sm text-amber-300/80 font-sans tracking-wide">
-                  {currentContent.subtitle}
-                </p>
-              )}
-            </div>
+          <div className="relative z-10 flex-1 px-4 sm:px-10 py-4 overflow-y-auto">
+            {currentPage === totalPages ? (
+              <BackCoverView />
+            ) : (
+              <>
+                {/* Title & Subtitle */}
+                <div className="mb-4">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-wide border-r-4 border-amber-400 pr-3">
+                    {currentContent.title}
+                  </h2>
+                  {currentContent.subtitle && (
+                    <p className="mt-1 text-xs sm:text-sm text-amber-300/80 font-sans tracking-wide">
+                      {currentContent.subtitle}
+                    </p>
+                  )}
+                </div>
 
-            {/* Architectural Visual Media */}
-            {currentContent.image && (
-              <div className="my-4 rounded-sm overflow-hidden border border-amber-400/50 shadow-[0_0_25px_rgba(212,175,55,0.25)] relative group">
-                <img
-                  src={currentContent.image}
-                  alt={currentContent.title}
-                  referrerPolicy="no-referrer"
-                  className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 ${
-                    isExpanded ? 'h-64 sm:h-80 md:h-96' : 'h-48 sm:h-64 md:h-72'
-                  }`}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                {currentContent.imageCaption && (
-                  <p className="absolute bottom-2 right-3 left-3 text-[11px] sm:text-xs text-amber-100 font-editorial tracking-wide drop-shadow-md">
-                    {currentContent.imageCaption}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Philosophical Architectural Quote */}
-            {currentContent.quote && (
-              <blockquote className="my-4 p-3 sm:p-4 rounded-sm bg-gradient-to-r from-amber-500/10 to-transparent border-r-3 border-amber-400 font-editorial text-sm sm:text-base text-amber-200/90 italic leading-relaxed">
-                {currentContent.quote}
-              </blockquote>
-            )}
-
-            {/* Editorial Body Paragraphs */}
-            <div className="space-y-3 text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans text-justify">
-              {currentContent.content.map((paragraph, idx) => (
-                <p key={idx} className="first-letter:text-amber-400 first-letter:font-bold">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-
-            {/* Architectural Specifications Grid */}
-            {currentContent.specs && (
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-sm bg-black/60 border border-amber-500/25 text-xs">
-                {currentContent.specs.map((spec, i) => (
-                  <div key={i} className="flex flex-col">
-                    <span className="text-[11px] text-zinc-400">{spec.label}</span>
-                    <span className="font-semibold text-amber-300 mt-0.5">{spec.value}</span>
+                {/* Chapter Artwork Header / Media */}
+                {currentContent.image && (
+                  <div className="my-4 rounded-sm overflow-hidden border border-amber-400/50 shadow-[0_0_25px_rgba(212,175,55,0.25)] relative group">
+                    <img
+                      src={currentContent.image}
+                      alt={currentContent.title}
+                      referrerPolicy="no-referrer"
+                      className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 ${
+                        isExpanded ? 'h-64 sm:h-80 md:h-96' : 'h-48 sm:h-64 md:h-72'
+                      }`}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                    {currentContent.imageCaption && (
+                      <p className="absolute bottom-2 right-3 left-3 text-[11px] sm:text-xs text-amber-100 font-editorial tracking-wide drop-shadow-md">
+                        {currentContent.imageCaption}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+
+                {/* Quote */}
+                {currentContent.quote && (
+                  <blockquote className="my-4 p-3 sm:p-4 rounded-sm bg-gradient-to-r from-amber-500/10 to-transparent border-r-3 border-amber-400 font-editorial text-sm sm:text-base text-amber-200/90 italic leading-relaxed">
+                    {currentContent.quote}
+                  </blockquote>
+                )}
+
+                {/* Editorial Body Paragraphs */}
+                <div className="space-y-3 text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans text-justify">
+                  {currentContent.content.map((paragraph, idx) => (
+                    <p key={idx} className="first-letter:text-amber-400 first-letter:font-bold">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Specialized Interactive Glossary Grid when on Glossary Page */}
+                {currentContent.isGlossary && (
+                  <div className="mt-6 pt-4 border-t border-amber-500/30">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      <h4 className="font-bold text-sm text-amber-300">
+                        معجم المصطلحات والمفاهيم الكونية والتاريخية (12 مدخل أساسي):
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {BOOK_STRUCTURE_CONFIG.glossary.map((g, gIdx) => (
+                        <div
+                          key={gIdx}
+                          className="p-3 rounded bg-black/60 border border-amber-500/25 hover:border-amber-400/60 transition-all text-right"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-xs text-amber-300">
+                              {g.term}
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-400/10 text-amber-200/80 border border-amber-400/30">
+                              {g.category}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-zinc-300 leading-relaxed">
+                            {g.definition}
+                          </p>
+                          <div className="mt-1 text-[10px] text-zinc-500">
+                            موضع الورود: {g.context}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Specifications Grid */}
+                {currentContent.specs && (
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-sm bg-black/60 border border-amber-500/25 text-xs">
+                    {currentContent.specs.map((spec, i) => (
+                      <div key={i} className="flex flex-col">
+                        <span className="text-[11px] text-zinc-400">{spec.label}</span>
+                        <span className="font-semibold text-amber-300 mt-0.5">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Bottom of Page Marker: Two Small Black Triangles with Golden Page Numbers */}
+                <div className="mt-8 pt-4 border-t border-amber-500/20 flex items-center justify-between select-none">
+                  {/* Right Small Black Triangle: Arabic Numeral in Gold */}
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/60 border border-amber-500/30 shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                    title={`رقم الصفحة بالترقيم العربي: ${toArabicIndicDigits(currentPage)}`}
+                  >
+                    <svg viewBox="0 0 24 22" className="w-4.5 h-4 shrink-0 drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]">
+                      <polygon points="12,1 23,21 1,21" fill="#040406" stroke="#D4AF37" strokeWidth="1.3" />
+                      <text x="12" y="17.2" textAnchor="middle" fill="#F3E5AB" fontSize="9.5" fontWeight="bold" fontFamily="Cairo, Amiri, sans-serif">
+                        {toArabicIndicDigits(currentPage)}
+                      </text>
+                    </svg>
+                    <span className="text-[10px] text-amber-300 font-editorial font-bold">
+                      صفحة {toArabicIndicDigits(currentPage)}
+                    </span>
+                  </div>
+
+                  <div className="h-[1px] flex-1 mx-3 bg-gradient-to-r from-transparent via-amber-500/25 to-transparent hidden sm:block" />
+
+                  {/* Left Small Black Triangle: English/Western Numeral in Gold */}
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/60 border border-amber-500/30 shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                    title={`Page number in Western numerals: ${currentPage}`}
+                  >
+                    <span className="text-[10px] text-amber-300 font-mono font-bold">
+                      P. {currentPage}
+                    </span>
+                    <svg viewBox="0 0 24 22" className="w-4.5 h-4 shrink-0 drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]">
+                      <polygon points="12,1 23,21 1,21" fill="#040406" stroke="#D4AF37" strokeWidth="1.3" />
+                      <text x="12" y="17" textAnchor="middle" fill="#F3E5AB" fontSize="9" fontWeight="bold" fontFamily="monospace, sans-serif">
+                        {currentPage}
+                      </text>
+                    </svg>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
           {/* Book Bottom Footer Ribbon */}
-          <div className="relative z-10 px-6 sm:px-8 py-2.5 border-t border-amber-500/20 flex items-center justify-between text-[11px] text-zinc-500 bg-black/40">
-            <span className="font-cinzel text-amber-400/80">MD GROUP © 2026</span>
+          <div className="relative z-10 px-4 sm:px-8 py-2.5 border-t border-amber-500/20 flex items-center justify-between text-[11px] text-zinc-500 bg-black/50">
+            {/* Right: Small Black Triangle with Arabic numeral in Gold + Title */}
+            <div className="flex items-center gap-2">
+              <svg viewBox="0 0 24 22" className="w-4 h-3.5 shrink-0 drop-shadow-[0_0_5px_rgba(212,175,55,0.4)]">
+                <polygon points="12,1 23,21 1,21" fill="#040406" stroke="#D4AF37" strokeWidth="1.2" />
+                <text x="12" y="17.2" textAnchor="middle" fill="#F3E5AB" fontSize="9" fontWeight="bold" fontFamily="Cairo, Amiri, sans-serif">
+                  {toArabicIndicDigits(currentPage)}
+                </text>
+              </svg>
+              <span className="font-editorial text-amber-400/90 font-bold hidden sm:inline">
+                كتاب «نون» · تأليف: محمد الهمام © 2026
+              </span>
+            </div>
+
+            {/* Center: Flip hints and Expand Button */}
             <div className="flex items-center gap-3 text-zinc-400">
-              <span className="hidden sm:inline">انقر أطراف الصفحة أو استخدم الأسهم للتقليب</span>
+              <span className="hidden md:inline text-[10px]">انقر أطراف الصفحة أو استخدم الأسهم للتقليب</span>
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="text-amber-300/80 hover:text-white flex items-center gap-1 cursor-pointer"
+                className="text-amber-300/80 hover:text-white flex items-center gap-1 cursor-pointer text-[10px]"
               >
                 {isExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
                 <span>{isExpanded ? 'عرض عادي' : 'تكبير للشاشة'}</span>
               </button>
             </div>
-            <span className="font-mono text-zinc-400">
-              {currentPage} / {totalPages}
-            </span>
+
+            {/* Left: Total pages + Small Black Triangle with English numeral in Gold */}
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-zinc-400 text-xs hidden sm:inline">
+                {currentPage} / {totalPages}
+              </span>
+              <svg viewBox="0 0 24 22" className="w-4 h-3.5 shrink-0 drop-shadow-[0_0_5px_rgba(212,175,55,0.4)]">
+                <polygon points="12,1 23,21 1,21" fill="#040406" stroke="#D4AF37" strokeWidth="1.2" />
+                <text x="12" y="17" textAnchor="middle" fill="#F3E5AB" fontSize="8.5" fontWeight="bold" fontFamily="monospace, sans-serif">
+                  {currentPage}
+                </text>
+              </svg>
+            </div>
           </div>
         </div>
       </main>

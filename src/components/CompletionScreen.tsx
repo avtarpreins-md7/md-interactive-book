@@ -36,8 +36,8 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
   const handleShare = async () => {
     const shareData = {
-      title: 'كتاب مجموعة MD المعمارية التفاعلي',
-      text: 'عشت تجربة سينمائية فريدة واطلعت على صروح مجموعة MD وتطبيقاتها الرقمية.',
+      title: 'كتاب «نون» | تأليف: محمد الهمام',
+      text: 'عشت تجربة سينمائية تفاعلية فريدة واطلعت على فصول كتاب «نون» للمؤلف محمد الهمام.',
       url: window.location.href
     };
 
@@ -108,10 +108,10 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
         {/* Thank You Headline */}
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2">
-          شكراً لأنك كنت جزءاً من رحلة مجموعة MD
+          شكراً لأنك كنت جزءاً من رحلة كتاب «نون»
         </h2>
         <p className="text-xs sm:text-sm text-amber-200/80 font-editorial leading-relaxed mb-6 max-w-xl">
-          اكتملت قراءتك لكافة فصول الإصدار التوثيقي المعماري. كل صرح رأيته اليوم هو بداية لمستقبل يتخطى حدود الخيال الهندسي.
+          اكتملت قراءتك لكافة فصول كتاب «نون» للمؤلف محمد الهمام. كل فكرة قرأتها اليوم هي خطوة نحو تحويل الرؤى والمعرفة إلى منجزات تفيد المجتمع والإنسانية.
         </p>
 
         {/* Action Buttons Grid */}
@@ -224,8 +224,8 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
       {/* Footer */}
       <footer className="relative z-20 w-full max-w-6xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 border-t border-zinc-800/60 gap-2">
-        <span>مجموعة MD المعمارية · الإصدار التوثيقي الحصري</span>
-        <span className="font-mono text-amber-400/80">MD LUXURY COLLECTION · © 2026</span>
+        <span>كتاب «نون» · تأليف: محمد الهمام</span>
+        <span className="font-mono text-amber-400/80">EDITION 2026 · ALL RIGHTS RESERVED</span>
       </footer>
     </div>
   );

@@ -1,0 +1,22 @@
+{
+  "id": "md7-intro",
+  "partId": "closing",
+  "partTitle": "صفحات المنظومة والختام",
+  "order": 33,
+  "displayNumber": "تعريف",
+  "title": "تعريف مجموعة ومنظومة MD7",
+  "subtitle": "مساحة تعريفية مخصصة لمنظومة MD7 (بانتظار النص المعتمد من المؤلف)",
+  "author": "محمد الهمام",
+  "sourcePages": "صفحة مستحدثة",
+  "sourceWordCount": 0,
+  "copiedWordCount": 0,
+  "status": "صفحة مستحدثة",
+  "isAlternateVersion": false,
+  "kind": "md7-intro",
+  "image": "/books/noon/images/calm_backdrop.jpg",
+  "imagePrompt": "خلفية سوداء نقية بإطار ذهبي معماري فارغ جاهز للنص التعريفي.",
+  "noteUnderImage": "نبذة تفسيرية: صفحة عنوانية مخصصة لتعريف منظومة MD7.",
+  "quotes": [],
+  "deletions": [],
+  "paragraphs": []
+}

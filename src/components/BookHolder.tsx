@@ -52,7 +52,7 @@ export const BookHolder: React.FC<BookHolderProps> = ({
           </button>
 
           <span className="font-cinzel text-xs text-amber-400 font-bold tracking-widest hidden sm:inline">
-            MD LUXURY COLLECTION
+            EDITION 2026 · DOCUMENTARY
           </span>
         </div>
       </header>
@@ -93,7 +93,7 @@ export const BookHolder: React.FC<BookHolderProps> = ({
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && handleBookClick()}
             className="group relative cursor-pointer transition-all duration-500 hover:scale-105 active:scale-95 perspective-1000 z-20"
-            title="انقر لفتح كتاب مجموعة MD"
+            title="انقر لفتح كتاب «نون» للمؤلف محمد الهمام"
           >
             {/* The Book Object */}
             <div className="relative w-64 sm:w-72 md:w-80 h-88 sm:h-96 md:h-[420px] rounded-r-lg rounded-l-sm bg-gradient-to-r from-[#121218] via-[#0E0E14] to-[#181824] border-2 border-amber-400/80 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_40px_rgba(212,175,55,0.35)] flex flex-col justify-between p-6 sm:p-8 overflow-hidden transform-style-3d group-hover:shadow-[0_30px_70px_rgba(0,0,0,0.98),0_0_60px_rgba(243,229,171,0.6)]">
@@ -109,28 +109,28 @@ export const BookHolder: React.FC<BookHolderProps> = ({
               {/* Book Top Ribbon / Header */}
               <div className="relative z-10 flex items-center justify-between text-amber-300/80 text-[11px] font-cinzel tracking-widest">
                 <span>VOL. I · 2026</span>
-                <span>MONOGRAPH</span>
+                <span>PHILOSOPHICAL MONOGRAPH</span>
               </div>
 
-              {/* Center MD Monogram & Calligraphy */}
+              {/* Center Calligraphy & Crescent/Star Motif */}
               <div className="relative z-10 flex flex-col items-center justify-center my-auto text-center">
-                {/* Embossed MD Seal */}
+                {/* Embossed Sacred Noon & Crescent/Star Motif */}
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-amber-400/90 flex items-center justify-center bg-black/60 shadow-[0_0_30px_rgba(212,175,55,0.4)] group-hover:shadow-[0_0_45px_rgba(243,229,171,0.7)] transition-all">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-amber-300/40 flex flex-col items-center justify-center">
-                    <span className="font-cinzel text-3xl sm:text-4xl font-extrabold text-amber-300 tracking-wider">
-                      MD
+                    <span className="font-editorial text-4xl sm:text-5xl font-extrabold text-amber-300 -mt-1">
+                      ن
                     </span>
-                    <span className="text-[8px] font-sans text-amber-200/70 tracking-widest -mt-1">
-                      GROUP
+                    <span className="text-[8px] font-mono text-amber-200/70 tracking-widest -mt-1">
+                      NOON
                     </span>
                   </div>
                 </div>
 
-                <h3 className="mt-6 text-lg sm:text-xl font-bold text-white tracking-wide">
-                  مجموعة MD المعمارية
+                <h3 className="mt-5 text-2xl sm:text-3xl font-black text-amber-300 tracking-wide font-editorial">
+                  «نون»
                 </h3>
-                <p className="mt-1 text-xs text-amber-300/75 font-editorial tracking-wider">
-                  الأفق المعماري الجديد
+                <p className="mt-1 text-xs text-white font-cinzel tracking-wider font-semibold">
+                  تأليف: محمد الهمام
                 </p>
               </div>
 
@@ -181,7 +181,7 @@ export const BookHolder: React.FC<BookHolderProps> = ({
       {/* Footer Info */}
       <footer className="relative z-20 w-full max-w-6xl mx-auto px-6 py-4 flex items-center justify-between text-xs text-zinc-500 border-t border-zinc-800/60">
         <span>تجربة رقمية تفاعلية مستمرة</span>
-        <span>جميع الحقوق محفوظة لمجموعة MD © 2026</span>
+        <span>كتاب «نون» · تأليف: محمد الهمام © 2026</span>
       </footer>
     </div>
   );

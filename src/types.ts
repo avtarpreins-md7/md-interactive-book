@@ -9,6 +9,9 @@ export interface BookPage {
   image?: string;
   imageCaption?: string;
   specs?: { label: string; value: string }[];
+  isFrontCover?: boolean;
+  isBackCover?: boolean;
+  isGlossary?: boolean;
 }
 
 export interface ReadingProgress {
