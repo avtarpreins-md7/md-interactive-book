@@ -255,7 +255,7 @@ export const GoldenOceanScene: React.FC<GoldenOceanSceneProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-amber-400/70 bg-gradient-to-r from-amber-500/20 to-amber-400/10 hover:bg-amber-400/25 text-amber-300 hover:text-white transition-all text-xs font-semibold shadow-[0_0_15px_rgba(212,175,55,0.25)] cursor-pointer"
             title="تطبيقات ومنظومة MD7 (AI Studio, Currency, Vercel)"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>تطبيقات MD7</span>
           </button>
 
@@ -349,13 +349,13 @@ export const GoldenOceanScene: React.FC<GoldenOceanSceneProps> = ({
           onClick={handleStartExperience}
           className="group relative w-full sm:w-auto min-w-[280px] px-8 py-3.5 rounded-sm bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-black font-bold text-base tracking-wide shadow-[0_0_35px_rgba(212,175,55,0.6)] hover:shadow-[0_0_55px_rgba(243,229,171,0.85)] hover:scale-[1.02] active:scale-[0.99] transition-all flex items-center justify-center gap-3 cursor-pointer"
         >
-          <Compass className="w-5 h-5 text-black transition-transform group-hover:rotate-45" />
+          <Compass className="w-5 h-5 text-black" />
           <span>اضغط للانتقال إلى الرحلة</span>
           <span className="text-xs font-mono bg-black/20 px-2 py-0.5 rounded text-black font-bold">ENTER</span>
         </button>
 
         <p className="mt-3 text-[11px] text-zinc-400/80">
-          انغمس في رحلة الوعي والمعرفة الفلسفية واستكشف فصول كتاب «نون»
+          انغمس في رحلة الوعي والمعرفة الفلسفية واستكشف أبواب كتاب «نون»
         </p>
       </div>
     </div>

@@ -470,8 +470,8 @@ export const BOOK_PAGES: BookPage[] = [
     ],
     specs: [
       { label: 'الموقع الرسمي', value: 'md7-group.ai.studio' },
-      { label: 'تطبيق العملات', value: 'Md_currency.-html' },
-      { label: 'بوابة فيرسل', value: 'md-7-site.vercel.app' }
+      { label: 'تطبيق العملات', value: 'avtarpreins-md7.github.io/md-currency' },
+      { label: 'مشغل الصوت', value: 'md3-musician.vercel.app' }
     ],
     isBackCover: true
   }
@@ -480,6 +480,7 @@ export const BOOK_PAGES: BookPage[] = [
 export const INITIAL_REVIEWS = [
   {
     id: 'rev-1',
+    bookId: 'noon',
     name: 'م. فيصل الشمري',
     rating: 5,
     comment: 'عمل فكري ومعرفي مذهل في كتاب «نون» للكاتب محمد الهمام! الربط بين رمزية نون ومستقبل التكنولوجيا فاق التوقعات.',
@@ -488,6 +489,7 @@ export const INITIAL_REVIEWS = [
   },
   {
     id: 'rev-2',
+    bookId: 'noon',
     name: 'Sarah Jenkins',
     rating: 5,
     comment: 'The intellectual depth of "Noon" and the cinematic black & gold atmosphere is sublime. Brilliant work by Mohamed El-Hammam!',
@@ -496,25 +498,28 @@ export const INITIAL_REVIEWS = [
   },
   {
     id: 'rev-3',
+    bookId: 'noon',
     name: 'د. طارق المنصوري',
     rating: 5,
-    comment: 'فصول كتاب «نون» متماسكة فلسفياً وعلمياً، وخاتمة «ما بعد نون» تلهم كل باحث عن التميز الحقيقي والإصلاح العملي.',
+    comment: 'أبواب كتاب «نون» متماسكة فلسفياً وعلمياً، وخاتمة «ما بعد نون» تلهم كل باحث عن التميز الحقيقي والإصلاح العملي.',
     timestamp: 'منذ 34 دقيقة',
     isVerified: true
   },
   {
     id: 'rev-4',
+    bookId: 'noon',
     name: 'ليلى الهاشمي',
     rating: 5,
-    comment: 'فصل الذكاء الاصطناعي والماتريكس وقاموس المصطلحات كُتبت بوعي فائق وأسلوب رصين. فخر للنشر الرقمي المعاصر.',
+    comment: 'باب الذكاء الاصطناعي والماتريكس وقاموس المصطلحات كُتبت بوعي فائق وأسلوب رصين. فخر للنشر الرقمي المعاصر.',
     timestamp: 'منذ ساعة',
     isVerified: true
   },
   {
     id: 'rev-5',
+    bookId: 'noon',
     name: 'Alexander Wright',
     rating: 5,
-    comment: 'The countdown mechanics and author preview mode set a new gold standard for digital publications.',
+    comment: 'The reading experience and unified book platform set a new gold standard for digital publications.',
     timestamp: 'منذ ساعتين',
     isVerified: true
   }

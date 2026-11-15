@@ -1,332 +1,319 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Gift, X } from 'lucide-react';
+import { UnifiedPlatformProvider, useUnifiedPlatform } from './context/UnifiedPlatformContext';
+import { BookPlatformHome } from './components/BookPlatformHome';
+import { LibraryView } from './components/LibraryView';
+import { PublisherPortal } from './components/PublisherPortal';
 import { GoldenOceanScene } from './components/GoldenOceanScene';
 import { BookHolder } from './components/BookHolder';
 import { BookReader } from './components/BookReader';
 import { CompletionScreen } from './components/CompletionScreen';
-import { ResumeReadingModal } from './components/ResumeReadingModal';
-import { ReviewModal } from './components/ReviewModal';
+import { BookAuditView } from './components/BookAuditView';
+import { CentralWalletModal } from './components/CentralWalletModal';
+import { RoleAuthModal } from './components/RoleAuthModal';
 import { MD7AppsModal } from './components/MD7AppsModal';
 import { PublishBookModal } from './components/PublishBookModal';
-import { BookLaunchCountdown } from './components/BookLaunchCountdown';
+import { ReviewModal } from './components/ReviewModal';
 import { AuthorAccessModal } from './components/AuthorAccessModal';
 import { AuthorPreviewBanner } from './components/AuthorPreviewBanner';
-import { INITIAL_REVIEWS } from './data/bookContent';
-import { BOOK_STRUCTURE_CONFIG } from './data/bookStructureConfig';
-import { ReaderReview, ReadingProgress } from './types';
+import { MD3MusicPlayer } from './components/MD3MusicPlayer';
+import { UserRole } from './types';
 import { audioEngine } from './utils/audioEngine';
 
-type ActiveScreen = 'countdown' | 'ocean' | 'pedestal' | 'reader' | 'completion';
+type RouteState =
+  | { view: 'home' }
+  | { view: 'library' }
+  | { view: 'publisher' }
+  | { view: 'pedestal'; bookId: string }
+  | { view: 'ocean'; bookId: string }
+  | { view: 'reader'; bookId: string; page: number }
+  | { view: 'completion'; bookId: string }
+  | { view: 'audit'; bookId: string };
 
-export default function App() {
-  const [, startTransition] = useTransition();
+function parseHashRoute(): RouteState {
+  const raw = window.location.hash.replace(/^#/, '') || '/';
+  const parts = raw.split('/').filter(Boolean);
 
-  // Check launch time: 11 November 2026, 11:11 PM Cairo Time (UTC+2 => 21:11:00Z)
-  const targetLaunchTimestamp = new Date(BOOK_STRUCTURE_CONFIG.targetLaunchCairo).getTime();
-  
-  // Real time vs target check
-  const [isNaturallyLaunched, setIsNaturallyLaunched] = useState<boolean>(() => {
-    return Date.now() >= targetLaunchTimestamp;
-  });
+  if (parts.length === 0) return { view: 'home' };
+  if (parts[0] === 'library') return { view: 'library' };
+  if (parts[0] === 'publisher') return { view: 'publisher' };
+  if (parts[0] === 'book' && parts[1]) {
+    const bookId = parts[1];
+    if (parts[2] === 'ocean') return { view: 'ocean', bookId };
+    if (parts[2] === 'read') {
+      const page = Math.max(1, parseInt(parts[3] || '1', 10) || 1);
+      return { view: 'reader', bookId, page };
+    }
+    if (parts[2] === 'completion') return { view: 'completion', bookId };
+    if (parts[2] === 'audit') return { view: 'audit', bookId };
+    return { view: 'pedestal', bookId };
+  }
+  return { view: 'home' };
+}
 
-  // Dedicated Author Preview Mode for Mohamed El-Hammam
-  // Authenticated securely via server token - NO query string bypass allowed!
-  const [isAuthorPreview, setIsAuthorPreview] = useState<boolean>(false);
-  const [showAuthorModal, setShowAuthorModal] = useState<boolean>(false);
+function setHashRoute(hashPath: string) {
+  const target = hashPath.startsWith('#') ? hashPath : `#${hashPath}`;
+  if (window.location.hash !== target) {
+    window.location.hash = target;
+  }
+}
 
-  // Validate server-side author session on mount
+const LiveGiftToast: React.FC = () => {
+  const { liveGiftEvent, dismissLiveGift } = useUnifiedPlatform();
+  if (!liveGiftEvent) return null;
+
+  return (
+    <div
+      dir="rtl"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] max-w-md w-[92%] rounded-2xl bg-gradient-to-r from-[#2B1C11] via-[#3D2919] to-[#2B1C11] border-2 border-[#D4AF37] text-white px-4 py-3 shadow-2xl flex items-center justify-between gap-3"
+    >
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-full bg-[#D4AF37] text-[#2B1C11] flex items-center justify-center shrink-0">
+          <Gift className="w-5 h-5" />
+        </div>
+        <div className="text-xs leading-snug">
+          <div className="font-black text-[#F5D68E]">إشعار بث مباشر · هدية دعم فوري</div>
+          <div>
+            أرسل <strong>{liveGiftEvent.supporterName}</strong> هدية{' '}
+            <strong className="text-[#F5D68E]">{liveGiftEvent.coins} عملات</strong> (بدون عمولة · -1 نقطة تقدم)
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={dismissLiveGift}
+        className="p-1 rounded hover:bg-white/10 text-amber-200 cursor-pointer"
+        aria-label="إغلاق"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
+const AppShell: React.FC = () => {
+  const { reviews, addReview } = useUnifiedPlatform();
+  const [route, setRoute] = useState<RouteState>(() => parseHashRoute());
+
+  const [showCentralCard, setShowCentralCard] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authDefaultRole, setAuthDefaultRole] = useState<UserRole>('reader');
+  const [showAppsModal, setShowAppsModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [reviewTargetBookId, setReviewTargetBookId] = useState<string | null>(null);
+
+  // Author Preview Authentication state
+  const [isAuthorPreview, setIsAuthorPreview] = useState(false);
+  const [showAuthorModal, setShowAuthorModal] = useState(false);
+
+  useEffect(() => {
+    const onHashChange = () => setRoute(parseHashRoute());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
   useEffect(() => {
     const verifyStoredSession = async () => {
       try {
         const storedToken = sessionStorage.getItem('noon_author_token');
         if (!storedToken) return;
-
         const res = await fetch('/api/author/verify-token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${storedToken}`
-          }
+            Authorization: `Bearer ${storedToken}`,
+          },
         });
-
         if (res.ok) {
           const data = await res.json();
-          if (data.valid) {
-            setIsAuthorPreview(true);
-            setActiveScreen((prev) => (prev === 'countdown' ? 'pedestal' : prev));
-          } else {
-            sessionStorage.removeItem('noon_author_token');
-            setIsAuthorPreview(false);
-          }
-        } else {
-          sessionStorage.removeItem('noon_author_token');
-          setIsAuthorPreview(false);
+          if (data.valid) setIsAuthorPreview(true);
+          else sessionStorage.removeItem('noon_author_token');
         }
-      } catch (e) {
-        console.warn('Session verification fallback', e);
+      } catch {
+        // silent fallback
       }
     };
-
     verifyStoredSession();
   }, []);
 
-  // Accessible if officially launched OR if the author is authenticated in preview mode
-  const isAccessible = isNaturallyLaunched || isAuthorPreview;
-
-  // Active Screen state
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>(() => {
-    if (Date.now() >= targetLaunchTimestamp) return 'ocean';
-    return 'countdown';
-  });
-
-  const [readingPage, setReadingPage] = useState<number>(1);
-  const [savedProgress, setSavedProgress] = useState<ReadingProgress | null>(null);
-  const [showResumeModal, setShowResumeModal] = useState<boolean>(false);
-  const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
-  const [showAppsModal, setShowAppsModal] = useState<boolean>(false);
-  const [showPublishModal, setShowPublishModal] = useState<boolean>(false);
-
-  const [reviews, setReviews] = useState<ReaderReview[]>(() => {
-    try {
-      const stored = localStorage.getItem('md_reader_reviews');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch {
-      // fallback
-    }
-    return INITIAL_REVIEWS;
-  });
-
-  // Watch real-time clock to trigger launch automatically at 11:11 PM Cairo time
-  useEffect(() => {
-    const checkTimer = () => {
-      if (Date.now() >= targetLaunchTimestamp && !isNaturallyLaunched) {
-        setIsNaturallyLaunched(true);
-        audioEngine.playGoldenChime();
-        if (activeScreen === 'countdown') {
-          setActiveScreen('ocean');
-        }
-      }
-    };
-
-    checkTimer();
-    const interval = setInterval(checkTimer, 1000);
-    return () => clearInterval(interval);
-  }, [targetLaunchTimestamp, isNaturallyLaunched, activeScreen]);
-
-  // Gatekeeper Enforcement: Ensure direct navigation cannot bypass launch date for ordinary visitors
-  useEffect(() => {
-    if (!isAccessible && activeScreen !== 'countdown') {
-      setActiveScreen('countdown');
-    }
-  }, [isAccessible, activeScreen]);
-
-  // Check saved progress on initial mount (only if accessible)
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('md_book_progress');
-      if (stored) {
-        const parsed: ReadingProgress = JSON.parse(stored);
-        if (parsed.currentPage > 1 && !parsed.isCompleted && isAccessible) {
-          setSavedProgress(parsed);
-          setShowResumeModal(true);
-        }
-      }
-    } catch (e) {
-      console.warn('Error reading saved progress', e);
-    }
-  }, [isAccessible]);
-
-  // Save reviews to localStorage when updated
-  useEffect(() => {
-    try {
-      localStorage.setItem('md_reader_reviews', JSON.stringify(reviews));
-    } catch (e) {
-      console.warn('Error storing reviews', e);
-    }
-  }, [reviews]);
-
-  // Handle adding a new review in real-time
-  const handleAddReview = (name: string, rating: number, comment: string) => {
-    const newRev: ReaderReview = {
-      id: `rev-${Date.now()}`,
-      name,
-      rating,
-      comment,
-      timestamp: 'الآن',
-      isVerified: true
-    };
-    setReviews((prev) => [newRev, ...prev]);
-  };
-
-  // Author Preview Mode Activation with server token
   const handleConfirmAuthor = (token: string) => {
     try {
       sessionStorage.setItem('noon_author_token', token);
     } catch {}
     setIsAuthorPreview(true);
-    setActiveScreen('pedestal');
+    setHashRoute('/book/noon/read/1');
   };
 
-  // Author Exit Preview Mode
   const handleExitAuthorPreview = () => {
     try {
       sessionStorage.removeItem('noon_author_token');
     } catch {}
     setIsAuthorPreview(false);
-    setActiveScreen('countdown');
+    setHashRoute('/');
   };
 
-  // Natural Launch Trigger (Automatic upon clock arrival)
-  const handleNaturalLaunchUnlock = () => {
-    setIsNaturallyLaunched(true);
-    audioEngine.playGoldenChime();
-    setActiveScreen('ocean');
-  };
+  const openAuthWithRole = useCallback((role: UserRole = 'reader') => {
+    setAuthDefaultRole(role);
+    setShowAuthModal(true);
+  }, []);
 
-  // Resume Reading Handler
-  const handleResume = () => {
-    if (savedProgress && isAccessible) {
-      setReadingPage(savedProgress.currentPage);
-      setActiveScreen('reader');
-      setShowResumeModal(false);
-      audioEngine.playBookOpen();
-    }
-  };
-
-  // Restart Journey Handler
-  const handleRestart = () => {
-    setReadingPage(1);
-    try {
-      localStorage.removeItem('md_book_progress');
-    } catch {}
-    setShowResumeModal(false);
-    setActiveScreen(isAccessible ? 'ocean' : 'countdown');
-  };
+  const handleReaderPageChange = useCallback(
+    (pageNum: number) => {
+      if (route.view === 'reader' && route.page !== pageNum) {
+        window.history.replaceState(null, '', `#/book/${route.bookId}/read/${pageNum}`);
+      }
+    },
+    [route]
+  );
 
   return (
-    <div className={`relative min-h-screen bg-[#050505] text-[#F3E5AB] font-sans antialiased overflow-x-hidden ${isAuthorPreview && activeScreen !== 'countdown' ? 'pt-10' : ''}`}>
-      {/* Author Preview Mode Luxury Ribbon */}
-      {isAuthorPreview && activeScreen !== 'countdown' && (
+    <div className={`min-h-screen font-sans antialiased ${isAuthorPreview ? 'pt-11' : ''}`}>
+      <LiveGiftToast />
+
+      {isAuthorPreview && (
         <AuthorPreviewBanner
           onExitPreview={handleExitAuthorPreview}
-          currentScreen={activeScreen}
+          currentScreen={
+            route.view === 'ocean' || route.view === 'pedestal' || route.view === 'reader' || route.view === 'audit'
+              ? route.view
+              : 'home'
+          }
           onNavigateScreen={(scr) => {
-            startTransition(() => {
-              setActiveScreen(scr);
-            });
+            if (scr === 'home') setHashRoute('/');
+            else if (scr === 'ocean') setHashRoute('/book/noon/ocean');
+            else if (scr === 'pedestal') setHashRoute('/book/noon');
+            else if (scr === 'reader') setHashRoute('/book/noon/read/1');
+            else if (scr === 'audit') setHashRoute('/book/noon/audit');
           }}
         />
       )}
 
-      {/* Screen 0: Pre-Launch Gatekeeper & Countdown (Active before 11:11 PM Cairo Time) */}
-      {activeScreen === 'countdown' && (
-        <BookLaunchCountdown
-          onLaunchUnlock={handleNaturalLaunchUnlock}
+      {route.view === 'home' && (
+        <BookPlatformHome
+          onOpenAuthModal={openAuthWithRole}
+          onOpenCentralCard={() => setShowCentralCard(true)}
+          onNavigateLibrary={() => setHashRoute('/library')}
+          onNavigatePublisher={() => setHashRoute('/publisher')}
+          onOpenBookHolder={(bookId) => setHashRoute(`/book/${bookId}`)}
+          onOpenBookReader={(bookId) => setHashRoute(`/book/${bookId}/read/1`)}
+          onOpenReviewForBook={(bookId) => setReviewTargetBookId(bookId)}
+          onOpenAppsModal={() => setShowAppsModal(true)}
           onOpenAuthorModal={() => setShowAuthorModal(true)}
-          onOpenAppsModal={() => setShowAppsModal(true)}
         />
       )}
 
-      {/* Screen 1: The Golden Black Sea & Noon letter */}
-      {activeScreen === 'ocean' && isAccessible && (
-        <GoldenOceanScene
-          onEnterJourney={() => {
-            setActiveScreen('pedestal');
-          }}
-          onOpenAppsModal={() => setShowAppsModal(true)}
-          onOpenPublishModal={() => setShowPublishModal(true)}
+      {route.view === 'library' && (
+        <LibraryView
+          onBackHome={() => setHashRoute('/')}
+          onOpenBookHolder={(bookId) => setHashRoute(`/book/${bookId}`)}
+          onOpenBookReader={(bookId) => setHashRoute(`/book/${bookId}/read/1`)}
+          onOpenReviewForBook={(bookId) => setReviewTargetBookId(bookId)}
+          onOpenCentralCard={() => setShowCentralCard(true)}
         />
       )}
 
-      {/* Screen 2: 3D Book Holder & Pedestal */}
-      {activeScreen === 'pedestal' && isAccessible && (
+      {route.view === 'publisher' && (
+        <PublisherPortal
+          onBackHome={() => setHashRoute('/')}
+          onOpenCentralCard={() => setShowCentralCard(true)}
+          onOpenBookReader={(bookId) => setHashRoute(`/book/${bookId}/read/1`)}
+          onOpenMailPublishModal={() => setShowPublishModal(true)}
+        />
+      )}
+
+      {route.view === 'pedestal' && (
         <BookHolder
-          onOpenBook={() => {
-            setActiveScreen('reader');
-          }}
-          onBackToOcean={() => {
-            setActiveScreen('ocean');
-          }}
+          onOpenBook={() => setHashRoute(`/book/${route.bookId}/read/1`)}
+          onBackHome={() => setHashRoute('/')}
+          onOpenOcean={() => setHashRoute(`/book/${route.bookId}/ocean`)}
           onOpenAppsModal={() => setShowAppsModal(true)}
         />
       )}
 
-      {/* Screen 3: Interactive Book Reader (All 21 Pages Unabbreviated + Glossary + Back Cover) */}
-      {activeScreen === 'reader' && isAccessible && (
+      {route.view === 'ocean' && (
+        <GoldenOceanScene
+          onEnterJourney={() => setHashRoute(`/book/${route.bookId}`)}
+          onOpenAppsModal={() => setShowAppsModal(true)}
+          onOpenPublishModal={() => setShowPublishModal(true)}
+        />
+      )}
+
+      {route.view === 'reader' && (
         <BookReader
-          initialPage={readingPage}
-          onCloseBook={() => {
-            setActiveScreen('pedestal');
-          }}
-          onFinishJourney={() => {
-            setActiveScreen('completion');
-          }}
+          bookId={route.bookId}
+          initialPage={route.page}
+          onCloseBook={() => setHashRoute(`/book/${route.bookId}`)}
+          onFinishJourney={() => setHashRoute(`/book/${route.bookId}/completion`)}
+          onPageChange={handleReaderPageChange}
+          onOpenAudit={() => setHashRoute(`/book/${route.bookId}/audit`)}
           reviews={reviews}
-          onAddReview={handleAddReview}
+          onAddReview={(name, rating, comment) => addReview(route.bookId, name, rating, comment)}
           onOpenAppsModal={() => setShowAppsModal(true)}
           onOpenPublishModal={() => setShowPublishModal(true)}
         />
       )}
 
-      {/* Screen 4: Completion & Legacy Manifesto */}
-      {activeScreen === 'completion' && isAccessible && (
+      {route.view === 'completion' && (
         <CompletionScreen
-          onRestart={() => {
-            setReadingPage(1);
-            setActiveScreen('reader');
-          }}
-          onOpenReviewModal={() => {
-            setShowReviewModal(true);
-          }}
-          onBackToOcean={() => {
-            setActiveScreen('ocean');
-          }}
+          onRestart={() => setHashRoute(`/book/${route.bookId}/read/1`)}
+          onOpenReviewModal={() => setReviewTargetBookId(route.bookId)}
+          onBackHome={() => setHashRoute('/')}
           onOpenAppsModal={() => setShowAppsModal(true)}
           onOpenPublishModal={() => setShowPublishModal(true)}
         />
       )}
 
-      {/* Author Access Modal */}
+      {route.view === 'audit' && (
+        <BookAuditView
+          onBack={() => setHashRoute('/book/noon/read/1')}
+          onOpenReaderAtChapter={(p) => setHashRoute(`/book/noon/read/${p}`)}
+        />
+      )}
+
+      {/* Persistent Sticky MD3 Music Player (Purple #7C3AED) */}
+      <MD3MusicPlayer />
+
+      {/* Modals */}
+      <CentralWalletModal isOpen={showCentralCard} onClose={() => setShowCentralCard(false)} />
+
+      <RoleAuthModal
+        isOpen={showAuthModal}
+        initialRole={authDefaultRole}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(role) => {
+          audioEngine.playGoldenChime();
+          if (role === 'publisher') setHashRoute('/publisher');
+          else setHashRoute('/library');
+        }}
+      />
+
+      <MD7AppsModal isOpen={showAppsModal} onClose={() => setShowAppsModal(false)} />
+
+      <PublishBookModal isOpen={showPublishModal} onClose={() => setShowPublishModal(false)} />
+
       <AuthorAccessModal
         isOpen={showAuthorModal}
         onClose={() => setShowAuthorModal(false)}
         onConfirmAuthor={handleConfirmAuthor}
       />
 
-      {/* Resume Previous Progress Modal */}
-      {savedProgress && isAccessible && (
-        <ResumeReadingModal
-          isOpen={showResumeModal}
-          progress={savedProgress}
-          onResume={handleResume}
-          onRestart={handleRestart}
-        />
-      )}
-
-      {/* Global Interactive Review Modal */}
       <ReviewModal
-        isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        onSubmitReview={handleAddReview}
-      />
-
-      {/* MD7 Applications Ecosystem Modal */}
-      <MD7AppsModal
-        isOpen={showAppsModal}
-        onClose={() => setShowAppsModal(false)}
-      />
-
-      {/* Digital Book Publishing Request Modal */}
-      <PublishBookModal
-        isOpen={showPublishModal}
-        onClose={() => setShowPublishModal(false)}
+        isOpen={reviewTargetBookId !== null}
+        onClose={() => setReviewTargetBookId(null)}
+        onSubmitReview={(name, rating, comment) => {
+          if (reviewTargetBookId) {
+            addReview(reviewTargetBookId, name, rating, comment);
+          }
+        }}
       />
     </div>
+  );
+};
+
+export default function App() {
+  return (
+    <UnifiedPlatformProvider>
+      <AppShell />
+    </UnifiedPlatformProvider>
   );
 }

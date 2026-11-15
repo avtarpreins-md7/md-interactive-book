@@ -1,348 +1,360 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- * 
- * Luxury PDF Export Document Generator
- * Title: "نون"
- * Author: "محمد الهمام"
- * Strictly enforces Rule 4: Front cover has NO MD or MD7!
- * Back cover allows MD with unified QR code and dark brown MD2.
+ * A5 Print & Paged.js PDF Generator for «نون»
+ * - Exact A5 (148mm × 210mm) page size
+ * - Pure black #000 !important page surfaces with -webkit-print-color-adjust: exact
+ * - Preloads cover & all images as data URIs before calling print
+ * - Live TOC page numbers via CSS target-counter(attr(href), page)
+ * - Two small black gold-bordered triangles in footer: Arabic-Indic (right) & Western (left)
+ * - Back cover includes md7-group.ai.studio QR + 4 colored spheres + Chrome instructions
+ * - Zero HTML/index.html file downloads (uses hidden iframe fallback if popups are blocked)
  */
 
-import { BOOK_PAGES } from '../data/bookContent';
-import { MD7_APPS } from '../data/md7Apps';
-import { BOOK_STRUCTURE_CONFIG } from '../data/bookStructureConfig';
+import { NOON_MANIFEST, getBookChapters } from '../books/registry';
+import { MD7_APPS, MD7_HUB_URL, CHROME_INSTALL_STEPS } from '../data/md7Apps';
 
-export function exportBookPDF(): Promise<boolean> {
-  return new Promise((resolve) => {
-    try {
-      const htmlContent = `
-<!DOCTYPE html>
+async function preloadImageAsDataUri(url: string): Promise<string> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return url;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : url);
+      reader.onerror = () => resolve(url);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+export async function exportBookPDF(): Promise<boolean> {
+  try {
+    const chapters = getBookChapters('noon', true);
+
+    // Preload cover & all unique chapter image URLs as data URIs
+    const uniqueImgUrls = Array.from(
+      new Set([NOON_MANIFEST.cover, ...chapters.map((c) => c.image).filter((u): u is string => Boolean(u))])
+    );
+    const dataUriMap = new Map<string, string>();
+    await Promise.all(
+      uniqueImgUrls.map(async (u) => {
+        dataUriMap.set(u, await preloadImageAsDataUri(u));
+      })
+    );
+
+    const coverSrc = dataUriMap.get(NOON_MANIFEST.cover) || NOON_MANIFEST.cover;
+
+    const chaptersHtml = chapters
+      .map((ch) => {
+        const imgData = ch.image ? dataUriMap.get(ch.image) || ch.image : '';
+        return `
+        <section class="page-chapter" id="sec-${escapeHtml(ch.id)}">
+          <div class="ch-kicker">${escapeHtml(ch.displayNumber || ch.partTitle)} ${
+            ch.isAlternateVersion ? '· نسخة بديلة' : ''
+          }</div>
+          <h2>${escapeHtml(ch.title)}</h2>
+          ${
+            imgData
+              ? `<figure class="ch-fig">
+                   <img src="${imgData}" alt="${escapeHtml(ch.title)}" />
+                   ${ch.noteUnderImage ? `<figcaption>${escapeHtml(ch.noteUnderImage)}</figcaption>` : ''}
+                 </figure>`
+              : ''
+          }
+          ${ch.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}
+        </section>`;
+      })
+      .join('\n');
+
+    const tocRowsHtml = chapters
+      .map(
+        (ch) => `
+        <li>
+          <a href="#sec-${escapeHtml(ch.id)}">
+            <span class="toc-title">${escapeHtml(ch.displayNumber ? ch.displayNumber + ' — ' : '')}${escapeHtml(ch.title)}</span>
+            <span class="toc-dots"></span>
+          </a>
+        </li>`
+      )
+      .join('\n');
+
+    const htmlContent = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>كتاب «نون» - تأليف محمد الهمام</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>كتاب «نون» — ${escapeHtml(NOON_MANIFEST.author)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
   <style>
     @page {
-      size: A4 portrait;
-      margin: 1.2cm;
+      size: 148mm 210mm;
+      margin: 15mm 14mm 18mm 14mm;
+      background: #000000 !important;
+      @bottom-right {
+        content: "▲ " counter(page, arabic-indic);
+        color: #D4AF37;
+        font-family: 'Cairo', sans-serif;
+        font-size: 9pt;
+        font-weight: 800;
+      }
+      @bottom-center {
+        content: "«نون» · ${escapeHtml(NOON_MANIFEST.author)}";
+        color: #A8893D;
+        font-family: 'Amiri', serif;
+        font-size: 8.5pt;
+      }
+      @bottom-left {
+        content: counter(page) " ▲";
+        color: #D4AF37;
+        font-family: monospace;
+        font-size: 9pt;
+        font-weight: 800;
+      }
     }
-    body {
-      background: #08080a;
+    @page :first {
+      margin: 0;
+      @bottom-right { content: none; }
+      @bottom-center { content: none; }
+      @bottom-left { content: none; }
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      background: #000000 !important;
       color: #F3E5AB;
       font-family: 'Cairo', 'Amiri', serif;
       margin: 0;
-      padding: 1.5cm;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      padding: 0;
     }
-    /* Front Cover - Strictly NO MD / MD7 */
-    .cover {
-      page-break-after: always;
-      height: 90vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      text-align: center;
-      border: 3px double #D4AF37;
-      padding: 2.5rem;
-      box-sizing: border-box;
-      background: radial-gradient(circle at center, #181822 0%, #08080a 100%);
+    .pagedjs_page {
+      background: #000000 !important;
     }
-    .cover-emblem {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      border: 2px solid #D4AF37;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      color: #D4AF37;
-      margin: 1.5rem 0;
-      background: #111;
-      box-shadow: 0 0 25px rgba(212,175,55,0.4);
-    }
-    .cover h1 {
-      font-size: 2.4rem;
-      color: #FFF6D6;
-      margin: 0 0 0.5rem;
-      font-weight: 900;
-    }
-    .cover h2 {
-      font-size: 1.15rem;
-      color: #D4AF37;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      margin-bottom: 1rem;
-    }
-    .cover .author-badge {
-      font-size: 1.25rem;
-      color: #FFFFFF;
-      font-weight: bold;
-      border-top: 1px solid rgba(212,175,55,0.5);
-      border-bottom: 1px solid rgba(212,175,55,0.5);
-      padding: 0.5rem 2rem;
-      margin-top: 1rem;
-    }
-    .page {
-      page-break-after: always;
-      min-height: 85vh;
-      border: 1px solid rgba(212,175,55,0.3);
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-sizing: border-box;
-      background: #0C0C10;
+    .cover-page {
+      width: 148mm;
+      height: 210mm;
       position: relative;
+      page-break-after: always;
+      background: #000000 !important;
+      overflow: hidden;
     }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(212,175,55,0.4);
-      padding-bottom: 0.6rem;
-      margin-bottom: 1.2rem;
-      font-size: 0.85rem;
-      color: #D4AF37;
-    }
-    .page h3 {
-      font-size: 1.6rem;
-      color: #FFF;
-      margin-top: 0;
-      border-right: 4px solid #D4AF37;
-      padding-right: 0.8rem;
-    }
-    .page-image {
+    .cover-page img {
       width: 100%;
-      max-height: 320px;
+      height: 100%;
       object-fit: cover;
-      border: 1px solid #D4AF37;
-      margin: 1rem 0;
-      border-radius: 4px;
+      display: block;
     }
-    .quote {
-      font-family: 'Amiri', serif;
-      font-size: 1.15rem;
-      font-style: italic;
-      color: #F3E5AB;
-      background: rgba(212,175,55,0.08);
-      border-right: 3px solid #D4AF37;
-      padding: 0.8rem 1.2rem;
-      margin: 1.2rem 0;
-    }
-    .prose p {
-      font-size: 0.95rem;
-      line-height: 1.8;
-      color: #E2E8F0;
-      margin-bottom: 0.8rem;
-      text-align: justify;
-    }
-    .specs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-top: 1.5rem;
-      padding: 0.8rem;
-      background: rgba(0,0,0,0.6);
-      border: 1px solid rgba(212,175,55,0.25);
-      border-radius: 4px;
-    }
-    .spec-item {
-      display: flex;
-      flex-direction: column;
-    }
-    .spec-label {
-      font-size: 0.75rem;
-      color: #94A3B8;
-    }
-    .spec-val {
-      font-size: 0.85rem;
-      color: #D4AF37;
-      font-weight: bold;
-    }
-    /* Back Cover */
-    .back-cover {
-      page-break-after: avoid;
-      height: 90vh;
-      border: 3px double #D4AF37;
-      padding: 2.5rem;
-      box-sizing: border-box;
-      background: radial-gradient(circle at center, #151520 0%, #060608 100%);
+    .cover-overlay {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
+      padding: 20mm 14mm;
+      background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.18) 50%, rgba(0,0,0,0.85) 100%);
       text-align: center;
     }
-    .node-grid {
+    .cover-title {
+      font-family: 'Amiri', serif;
+      font-size: 56pt;
+      font-weight: 900;
+      color: #F5D68E;
+      margin: 0;
+    }
+    .cover-author {
+      font-size: 16pt;
+      font-weight: 800;
+      color: #FFFFFF;
+      border-top: 1px solid #D4AF37;
+      padding-top: 6pt;
+    }
+    .toc-page {
+      page-break-after: always;
+    }
+    .toc-page h2 {
+      color: #F5D68E;
+      border-bottom: 1.5px solid #D4AF37;
+      padding-bottom: 5pt;
+      font-size: 16pt;
+    }
+    .toc-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .toc-list li {
+      margin-bottom: 4pt;
+      font-size: 9.5pt;
+    }
+    .toc-list a {
+      color: #F3E5AB;
+      text-decoration: none;
+      display: flex;
+      justify-content: space-between;
+    }
+    .toc-list a::after {
+      content: target-counter(attr(href), page);
+      color: #D4AF37;
+      font-weight: bold;
+      margin-right: 6pt;
+    }
+    .page-chapter {
+      page-break-before: always;
+    }
+    .ch-kicker {
+      color: #D4AF37;
+      font-size: 9.5pt;
+      font-weight: 700;
+      margin-bottom: 3pt;
+    }
+    .page-chapter h2 {
+      color: #FFFFFF;
+      font-size: 15pt;
+      border-right: 3px solid #D4AF37;
+      padding-right: 8pt;
+      margin: 0 0 8pt;
+    }
+    .ch-fig {
+      margin: 8pt 0;
+      border: 1px solid #D4AF37;
+      background: #08080A;
+      padding: 4pt;
+    }
+    .ch-fig img {
+      width: 100%;
+      max-height: 75mm;
+      object-fit: contain;
+      display: block;
+    }
+    .ch-fig figcaption {
+      font-size: 8.5pt;
+      color: #D4AF37;
+      padding-top: 4pt;
+      text-align: center;
+    }
+    .page-chapter p {
+      font-size: 10.2pt;
+      line-height: 1.85;
+      color: #EDE6D3;
+      text-align: justify;
+      margin: 0 0 7pt;
+    }
+    .back-cover {
+      page-break-before: always;
+      text-align: center;
+      padding-top: 8mm;
+    }
+    .spheres-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin: 1.5rem 0;
-      width: 100%;
-      max-width: 450px;
+      gap: 6pt;
+      margin: 10pt 0;
     }
-    .node-card {
-      background: rgba(0,0,0,0.7);
-      border: 1px solid rgba(212,175,55,0.3);
-      padding: 0.8rem;
-      border-radius: 6px;
+    .sphere-card {
+      border: 1px solid #D4AF37;
+      padding: 6pt;
+      border-radius: 6pt;
+      background: #0A0A0E;
+      font-size: 8.5pt;
       text-align: right;
     }
-    .node-md2 {
-      border-color: #8C5D30;
-      background: rgba(45, 25, 10, 0.6);
-    }
-    .node-badge {
-      font-weight: bold;
-      color: #D4AF37;
-      font-size: 0.85rem;
-    }
-    .node-md2 .node-badge {
-      color: #C5A059;
-    }
-    .qr-box {
-      border: 2px solid #D4AF37;
-      padding: 1rem;
-      background: #000;
-      display: inline-block;
-      margin: 1rem 0;
+    .mobile-hint {
+      font-size: 8pt;
+      color: #F5D68E;
+      border: 1px dashed #D4AF37;
+      padding: 5pt;
+      margin-top: 8pt;
     }
   </style>
 </head>
 <body>
-
-  <!-- FRONT COVER (Strictly NO MD / MD7) -->
-  <div class="cover">
-    <div>
-      <div style="font-size: 0.85rem; letter-spacing: 0.2em; color: #D4AF37;">إصدار توثيقي فلسفي حصري</div>
-      <div class="cover-emblem">ن</div>
+  <section class="cover-page">
+    <img src="${coverSrc}" alt="غلاف كتاب نون" />
+    <div class="cover-overlay">
+      <div style="color:#D4AF37;font-size:10pt;font-weight:700;">النسخة التوثيقية الكاملة</div>
+      <h1 class="cover-title">«${escapeHtml(NOON_MANIFEST.title)}»</h1>
+      <div class="cover-author">تأليف: ${escapeHtml(NOON_MANIFEST.author)}</div>
     </div>
-    <div>
-      <h1 style="font-size: 3rem; margin-bottom: 0.2rem; color: #FFF6D6;">«${BOOK_STRUCTURE_CONFIG.frontCover.title}»</h1>
-      <div class="author-badge">تأليف: ${BOOK_STRUCTURE_CONFIG.author}</div>
-      <p style="font-size: 0.95rem; color: #E2E8F0; max-width: 500px; margin: 1.5rem auto 0; font-family: 'Amiri', serif;">
-        «ن والقلم وما يسطرون · البداية الأزلية لكل فكرة خالدة تتحول إلى أثر حقيقي»
-      </p>
+  </section>
+
+  <section class="toc-page">
+    <h2>فهرس الأبواب والمباحث</h2>
+    <ul class="toc-list">${tocRowsHtml}</ul>
+  </section>
+
+  ${chaptersHtml}
+
+  <section class="back-cover">
+    <h2 style="color:#F5D68E;">منظومة MD7 الموحدة</h2>
+    <p style="font-size:9.5pt;color:#D4AF37;">${escapeHtml(MD7_HUB_URL)}</p>
+    <div class="spheres-grid">
+      ${MD7_APPS.map(
+        (app) => `
+        <div class="sphere-card">
+          <strong style="color:${app.colorHex};">● ${escapeHtml(app.name)}</strong><br/>
+          <span style="color:#CBD5E1;">${escapeHtml(app.url)}</span>
+        </div>`
+      ).join('')}
     </div>
-    <div style="font-size: 0.8rem; color: #94A3B8; border-top: 1px solid rgba(212,175,55,0.3); width: 80%; padding-top: 0.8rem;">
-      تاريخ الإتاحة الرسمية: 11 نوفمبر 2026 · توقيت القاهرة
+    <div style="text-align:right;font-size:8.5pt;color:#E2E8F0;margin-top:8pt;">
+      <strong>إضافة للشاشة الرئيسية (Chrome):</strong><br/>
+      ${CHROME_INSTALL_STEPS.map((s) => `• ${escapeHtml(s)}`).join('<br/>')}
     </div>
-  </div>
-
-  <!-- BOOK PAGES -->
-  ${BOOK_PAGES.filter(p => p.id > 1 && p.id < BOOK_PAGES.length).map(page => `
-    <div class="page">
-      <div class="page-header">
-        <span>${page.chapter || BOOK_STRUCTURE_CONFIG.projectTitle}</span>
-        <span>صفحة ${page.pageNumber}</span>
-      </div>
-      <h3>${page.title}</h3>
-      ${page.subtitle ? `<div style="font-size: 0.95rem; color: #D4AF37; margin-bottom: 0.8rem;">${page.subtitle}</div>` : ''}
-      
-      ${page.image ? `
-        <img class="page-image" src="${page.image}" alt="${page.title}" />
-        ${page.imageCaption ? `<div style="font-size: 0.8rem; color: #CBD5E1; margin-bottom: 1rem; font-style: italic;">${page.imageCaption}</div>` : ''}
-      ` : ''}
-
-      ${page.quote ? `<div class="quote">${page.quote}</div>` : ''}
-
-      <div class="prose">
-        ${page.content.map(para => `<p>${para}</p>`).join('')}
-      </div>
-
-      ${page.specs ? `
-        <div class="specs">
-          ${page.specs.map(s => `
-            <div class="spec-item">
-              <span class="spec-label">${s.label}</span>
-              <span class="spec-val">${s.value}</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
+    <div class="mobile-hint">
+      تنبيه الطباعة: فعّل «الرسومات الخلفية» (Background Graphics) من إعدادات الطباعة على هاتفك أو حاسوبك لضمان الخلفية السوداء الفاخرة.
     </div>
-  `).join('')}
-
-  <!-- BACK COVER (MD allowed with dark brown MD2) -->
-  <div class="back-cover">
-    <div>
-      <div style="font-size: 0.85rem; letter-spacing: 0.2em; color: #D4AF37;">MD UNIFIED ECOSYSTEM</div>
-      <h2 style="color: #FFF; font-size: 1.8rem; margin: 0.5rem 0;">منظومة الصروح والتحول الرقمي</h2>
-      <p style="font-size: 0.9rem; color: #CBD5E1; max-width: 480px; margin: 0 auto;">
-        بوابة موحدة تربط الرؤية الفكرية والتوثيقية بتطبيقات ومنصات المنظومة السحابية
-      </p>
-    </div>
-
-    <!-- Node Constellation -->
-    <div class="node-grid">
-      <div class="node-card">
-        <div class="node-badge">MD1 · الرؤية والابتكار</div>
-        <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.2rem;">توليد الأفكار والاستراتيجيات المستقبلية</div>
-      </div>
-      <div class="node-card node-md2">
-        <div class="node-badge" style="color: #dfc287;">MD2 · الإدارة والحوكمة (بني ذهبي)</div>
-        <div style="font-size: 0.75rem; color: #CBD5E1; margin-top: 0.2rem;">القيادة المؤسسية والتنظيم المعتمد</div>
-      </div>
-      <div class="node-card">
-        <div class="node-badge">MD3 · التطوير والتنفيذ</div>
-        <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.2rem;">التطبيقات والمنصات التفاعلية المباشرة</div>
-      </div>
-      <div class="node-card">
-        <div class="node-badge">MD4 · الاستدامة والمستقبل</div>
-        <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.2rem;">الطاقة النظيفة والواقع الافتراضي</div>
-      </div>
-    </div>
-
-    <!-- QR Code & Link -->
-    <div>
-      <div class="qr-box">
-        <div style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; margin-bottom: 0.3rem;">[ QR CODE ]</div>
-        <div style="font-family: monospace; font-size: 0.85rem; color: #FFF;">md7-group.ai.studio</div>
-      </div>
-      <div style="font-weight: bold; color: #D4AF37; font-size: 0.95rem; margin-top: 0.5rem;">
-        ${BOOK_STRUCTURE_CONFIG.backCover.footerText}
-      </div>
-    </div>
-
-    <div style="font-size: 0.8rem; color: #64748B;">
-      كتاب «نون» · تأليف: محمد الهمام · جميع الحقوق محفوظة © 2026
-    </div>
-  </div>
+  </section>
 
   <script>
-    window.onload = function() {
-      setTimeout(function() {
-        window.print();
-      }, 500);
-    };
+    window.addEventListener('load', function () {
+      setTimeout(function () { window.print(); }, 1100);
+    });
   </script>
 </body>
-</html>
-      `;
+</html>`;
 
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.open();
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        resolve(true);
-      } else {
-        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'كتاب_نون_محمد_الهمام.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        resolve(true);
-      }
-    } catch (e) {
-      console.error('PDF export error:', e);
-      resolve(false);
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      return true;
     }
-  });
+
+    // Fallback via hidden iframe print (NO HTML file download!)
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(htmlContent);
+      doc.close();
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      }, 1200);
+    }
+    return true;
+  } catch (e) {
+    console.error('PDF export error:', e);
+    return false;
+  }
 }

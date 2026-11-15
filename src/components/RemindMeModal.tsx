@@ -154,7 +154,7 @@ export const RemindMeModal: React.FC<RemindMeModalProps> = ({
               </div>
               <h3 className="text-xl font-bold text-white">ذكّرني عند إطلاق الكتاب</h3>
               <p className="text-xs text-amber-200/70 mt-1">
-                احصل على تنبيه فوري فور فتح صفحات وفصول الكتاب للقراءة العامة
+                احصل على تنبيه فوري فور فتح صفحات وأبواب الكتاب للقراءة العامة
               </p>
               <div className="mt-2 py-1 px-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono text-amber-300">
                 {targetDateString}

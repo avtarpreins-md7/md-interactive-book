@@ -54,7 +54,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, onSub
         {isSubmitted ? (
           <div className="py-10 text-center space-y-3 animate-in zoom-in duration-300">
             <div className="w-16 h-16 mx-auto rounded-full bg-amber-400/15 border border-amber-400 flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.6)]">
-              <Sparkles className="w-8 h-8 text-amber-300 animate-spin" />
+              <Sparkles className="w-8 h-8 text-amber-300" />
             </div>
             <h3 className="text-xl font-bold text-white">شكراً لمشاركتك رأيك القيّم</h3>
             <p className="text-xs text-amber-200/80">

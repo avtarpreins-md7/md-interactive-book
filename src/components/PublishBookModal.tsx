@@ -105,7 +105,7 @@ export const PublishBookModal: React.FC<PublishBookModalProps> = ({ isOpen, onCl
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="text-center">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-amber-400/10 border border-amber-400/40 text-[11px] font-cinzel text-amber-300 font-bold tracking-widest mb-1.5 shadow-[0_0_12px_rgba(212,175,55,0.2)]">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>DIGITAL PUBLISHING REQUEST</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-white">طلب نشر وتوثيق كتابك</h3>
@@ -162,7 +162,7 @@ export const PublishBookModal: React.FC<PublishBookModalProps> = ({ isOpen, onCl
               <textarea
                 value={bookSummary}
                 onChange={(e) => setBookSummary(e.target.value)}
-                placeholder="نبذة مختصرة عن موضوع الكتاب، الفئة المستهدفة، وعدد الفصول..."
+                placeholder="نبذة مختصرة عن موضوع الكتاب، الفئة المستهدفة، وعدد الأبواب..."
                 rows={3}
                 required
                 className="w-full px-3.5 py-2.5 rounded bg-black/60 border border-zinc-700 focus:border-amber-400 text-sm text-white placeholder-zinc-500 outline-none transition-colors resize-none"

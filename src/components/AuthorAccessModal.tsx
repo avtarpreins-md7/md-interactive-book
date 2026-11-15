@@ -96,7 +96,7 @@ export const AuthorAccessModal: React.FC<AuthorAccessModalProps> = ({
 
         {/* Description */}
         <p className="text-xs text-zinc-300 leading-relaxed mb-4">
-          تسجيل الدخول محمي عبر خادم المصادقة السحابي المعتمد للمؤلف <strong className="text-amber-300">{BOOK_STRUCTURE_CONFIG.author}</strong> لمراجعة كامل فصول وقاموس كتاب <strong className="text-amber-300">«{BOOK_STRUCTURE_CONFIG.projectTitle}»</strong> دون فتح القراءة للعامة.
+          تسجيل الدخول محمي عبر خادم المصادقة السحابي المعتمد للمؤلف <strong className="text-amber-300">{BOOK_STRUCTURE_CONFIG.author}</strong> لمراجعة كامل أبواب وقاموس كتاب <strong className="text-amber-300">«{BOOK_STRUCTURE_CONFIG.projectTitle}»</strong> دون فتح القراءة للعامة.
         </p>
 
         {/* Verification Form */}
@@ -148,7 +148,7 @@ export const AuthorAccessModal: React.FC<AuthorAccessModalProps> = ({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 text-black animate-spin" />
+                  <Loader2 className="w-4 h-4 text-black" />
                   <span>جارٍ التحقق من الخادم...</span>
                 </>
               ) : (

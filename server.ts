@@ -122,6 +122,57 @@ async function startServer() {
     });
   });
 
+  // Shared Unified 6-Platform Central Wallet State (server-side memory cache synced with client)
+  interface ServerWalletState {
+    coins: number;
+    progressPoints: number;
+    transactionsCount: number;
+    connectedPlatforms: number;
+    rankNumber: number;
+    rankTitle: string;
+    updatedAt: number;
+  }
+
+  let serverWalletState: ServerWalletState = {
+    coins: 78,
+    progressPoints: 100,
+    transactionsCount: 12,
+    connectedPlatforms: 6,
+    rankNumber: 7,
+    rankTitle: 'متقدم',
+    updatedAt: Date.now()
+  };
+
+  app.get('/api/wallet', (_req: Request, res: Response) => {
+    res.json({
+      ...serverWalletState,
+      egpRate: Number((serverWalletState.coins / 7.8).toFixed(2)),
+      ads_disabled: true,
+      rotation_disabled: true
+    });
+  });
+
+  app.post('/api/wallet', (req: Request, res: Response) => {
+    const body = req.body || {};
+    if (typeof body.coins === 'number' && Number.isFinite(body.coins) && body.coins >= 0) {
+      serverWalletState.coins = Math.floor(body.coins);
+    }
+    if (typeof body.progressPoints === 'number' && Number.isFinite(body.progressPoints)) {
+      serverWalletState.progressPoints = Math.max(0, Math.floor(body.progressPoints));
+    }
+    if (typeof body.transactionsCount === 'number' && Number.isFinite(body.transactionsCount)) {
+      serverWalletState.transactionsCount = Math.max(0, Math.floor(body.transactionsCount));
+    }
+    if (typeof body.rankNumber === 'number' && Number.isFinite(body.rankNumber)) {
+      serverWalletState.rankNumber = Math.max(1, Math.floor(body.rankNumber));
+    }
+    if (typeof body.rankTitle === 'string' && body.rankTitle.trim()) {
+      serverWalletState.rankTitle = body.rankTitle.trim();
+    }
+    serverWalletState.updatedAt = Date.now();
+    res.json({ success: true, wallet: serverWalletState });
+  });
+
   // Setup Vite in Dev mode or Static Serving in Prod mode
   if (!isProduction) {
     const vite = await createViteServer({
