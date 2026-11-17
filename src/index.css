@@ -110,3 +110,32 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(212, 175, 55, 0.7);
 }
+
+/* 3D Rotating MD Coin inside Book Exhibition */
+@keyframes md-coin-spin-3d {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.md-coin-3d-stage {
+  perspective: 700px;
+}
+
+.md-coin-3d-spinner {
+  transform-style: preserve-3d;
+  animation: md-coin-spin-3d 4.2s linear infinite;
+}
+
+.md-coin-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.md-coin-face-back {
+  transform: rotateY(180deg);
+}
+

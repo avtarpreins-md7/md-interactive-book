@@ -28,6 +28,7 @@ interface BookPlatformHomeProps {
   onOpenReviewForBook: (bookId: string) => void;
   onOpenAppsModal: () => void;
   onOpenAuthorModal: () => void;
+  onNavigateExhibition?: () => void;
 }
 
 export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
@@ -40,6 +41,7 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
   onOpenReviewForBook,
   onOpenAppsModal,
   onOpenAuthorModal,
+  onNavigateExhibition,
 }) => {
   const {
     account,
@@ -450,7 +452,17 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
         {/* Quiet Footer Links */}
         <footer className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#6D4C24]">
           <span className="font-bold">{EXHIBITION_CONFIG.platformTagline}</span>
-          <div className="flex items-center gap-4 font-semibold">
+          <div className="flex items-center gap-4 font-semibold flex-wrap justify-center">
+            {onNavigateExhibition && (
+              <button
+                type="button"
+                onClick={onNavigateExhibition}
+                className="hover:text-[#2B1C11] flex items-center gap-1 cursor-pointer underline decoration-[#B68B46]/60"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-[#6D4C24]" />
+                <span>معرض الكتاب (MD)</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onOpenAppsModal}

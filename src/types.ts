@@ -181,3 +181,44 @@ export interface BookManifest {
     quote: string;
   }[];
 }
+
+export interface ExhibitionBook {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  cover: string;
+  rating: number;
+  ratingsCount: number;
+  pageCount: number;
+  isFreeShowcase: boolean;
+  pricePoints: number;
+  priceEgpHint: number;
+  category: string;
+  isBuiltInNoon?: boolean;
+  samplePages: string[];
+  publishedByUser?: boolean;
+}
+
+export interface PrintedCardEntry {
+  id: string;
+  cardNumber: string; // MD-XXXX
+  printerName: string;
+  bookId: string;
+  bookTitle: string;
+  bookAuthor: string;
+  printedAt: string;
+}
+
+export type NarratorVoicePreset = 'male' | 'female' | 'sleep';
+
+export interface AudiobookResumeState {
+  bookId: string;
+  pageIndex: number;
+  wordIndex: number;
+  speed: number;
+  voicePreset: NarratorVoicePreset;
+  fontScale: number;
+  singlePageOnly: boolean;
+  updatedAt: number;
+}

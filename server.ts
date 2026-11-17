@@ -11,6 +11,7 @@
 
 import express, { Request, Response } from 'express';
 import { createServer as createViteServer } from 'vite';
+import { GoogleGenAI } from '@google/genai';
 import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,6 +19,19 @@ import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function getGeminiServerClient(): GoogleGenAI | null {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || !apiKey.trim()) return null;
+  return new GoogleGenAI({
+    apiKey: apiKey.trim(),
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      },
+    },
+  });
+}
 
 // Server-side secret key for HMAC token signing (never exposed to client)
 const SERVER_HMAC_SECRET = process.env.AUTHOR_SERVER_SECRET || crypto.randomBytes(32).toString('hex');
@@ -171,6 +185,124 @@ async function startServer() {
     }
     serverWalletState.updatedAt = Date.now();
     res.json({ success: true, wallet: serverWalletState });
+  });
+
+  // Audiobook Narrator TTS Cache & Voice Presets (Server-side Gemini 3.8 TTS)
+  const ttsAudioCache = new Map<string, Buffer>();
+  const VOICE_PRESETS: Record<'male' | 'female' | 'sleep', { voiceName: string; style: string }> = {
+    male: {
+      voiceName: 'Charon',
+      style:
+        'Warm, deep, expressive professional Arabic male audiobook narrator. Natural storytelling cadence, clear pauses on commas and periods, human warmth, never robotic.',
+    },
+    female: {
+      voiceName: 'Kore',
+      style:
+        'Warm, clear, expressive Arabic female audiobook narrator. Smooth storytelling intonation, natural pauses, engaging and human tone.',
+    },
+    sleep: {
+      voiceName: 'Zephyr',
+      style:
+        'Soft, calm, peaceful late-night Arabic sleep audiobook narrator. Gentle unhurried rhythm, soothing serene warmth ideal for relaxation.',
+    },
+  };
+
+  app.get('/api/tts/status', (_req: Request, res: Response) => {
+    res.json({
+      neuralAvailable: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()),
+      model: 'gemini-3.8-flash-lite-tts',
+    });
+  });
+
+  app.post('/api/tts/narrate', async (req: Request, res: Response) => {
+    const ai = getGeminiServerClient();
+    if (!ai) {
+      res.status(503).json({
+        success: false,
+        code: 'GEMINI_API_KEY_MISSING',
+        message: 'خدمة الراوي السحابي تتطلب إعداد GEMINI_API_KEY على الخادم.',
+      });
+      return;
+    }
+
+    const rawText = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    const presetKey: 'male' | 'female' | 'sleep' =
+      req.body?.voicePreset === 'female' || req.body?.voicePreset === 'sleep'
+        ? req.body.voicePreset
+        : 'male';
+
+    if (!rawText) {
+      res.status(400).json({ success: false, message: 'النص مطلوب للقراءة الصوتية.' });
+      return;
+    }
+
+    const clippedText = rawText.slice(0, 3500);
+    const cacheKey = crypto
+      .createHash('sha256')
+      .update(`${presetKey}:${clippedText}`)
+      .digest('hex');
+
+    const cachedWav = ttsAudioCache.get(cacheKey);
+    if (cachedWav) {
+      res.setHeader('Content-Type', 'audio/wav');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(cachedWav);
+      return;
+    }
+
+    try {
+      const preset = VOICE_PRESETS[presetKey];
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash-lite-tts',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: clippedText,
+                speechMetadata: {
+                  style: preset.style,
+                },
+              },
+            ],
+          },
+        ],
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: preset.voiceName },
+            },
+          },
+        },
+      });
+
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (!base64Audio) {
+        res.status(502).json({
+          success: false,
+          message: 'تعذر توليد الصوت من خدمة الراوي.',
+        });
+        return;
+      }
+
+      const wavBuffer = Buffer.from(base64Audio, 'base64');
+      if (ttsAudioCache.size >= 24) {
+        const oldestKey = ttsAudioCache.keys().next().value;
+        if (oldestKey) ttsAudioCache.delete(oldestKey);
+      }
+      ttsAudioCache.set(cacheKey, wavBuffer);
+
+      res.setHeader('Content-Type', 'audio/wav');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(wavBuffer);
+    } catch (error) {
+      console.error('TTS narrate error:', error);
+      res.status(502).json({
+        success: false,
+        message: 'حدث خطأ أثناء الاتصال بخدمة الراوي الصوتي.',
+      });
+    }
   });
 
   // Setup Vite in Dev mode or Static Serving in Prod mode

@@ -17,11 +17,13 @@ import { ReviewModal } from './components/ReviewModal';
 import { AuthorAccessModal } from './components/AuthorAccessModal';
 import { AuthorPreviewBanner } from './components/AuthorPreviewBanner';
 import { MD3MusicPlayer } from './components/MD3MusicPlayer';
+import { BookExhibitionView } from './components/BookExhibitionView';
 import { UserRole } from './types';
 import { audioEngine } from './utils/audioEngine';
 
 type RouteState =
   | { view: 'home' }
+  | { view: 'exhibition' }
   | { view: 'library' }
   | { view: 'publisher' }
   | { view: 'pedestal'; bookId: string }
@@ -31,10 +33,14 @@ type RouteState =
   | { view: 'audit'; bookId: string };
 
 function parseHashRoute(): RouteState {
+  if (typeof window !== 'undefined' && window.location.pathname === '/exhibition' && !window.location.hash) {
+    return { view: 'exhibition' };
+  }
   const raw = window.location.hash.replace(/^#/, '') || '/';
   const parts = raw.split('/').filter(Boolean);
 
   if (parts.length === 0) return { view: 'home' };
+  if (parts[0] === 'exhibition') return { view: 'exhibition' };
   if (parts[0] === 'library') return { view: 'library' };
   if (parts[0] === 'publisher') return { view: 'publisher' };
   if (parts[0] === 'book' && parts[1]) {
@@ -199,6 +205,19 @@ const AppShell: React.FC = () => {
           onOpenReviewForBook={(bookId) => setReviewTargetBookId(bookId)}
           onOpenAppsModal={() => setShowAppsModal(true)}
           onOpenAuthorModal={() => setShowAuthorModal(true)}
+          onNavigateExhibition={() => setHashRoute('/exhibition')}
+        />
+      )}
+
+      {route.view === 'exhibition' && (
+        <BookExhibitionView
+          onBackToPlatform={() => {
+            if (window.location.pathname === '/exhibition') {
+              window.history.replaceState(null, '', '/');
+            }
+            setHashRoute('/');
+          }}
+          onOpenFullNoonReader={() => setHashRoute('/book/noon/read/1')}
         />
       )}
 
@@ -270,8 +289,8 @@ const AppShell: React.FC = () => {
         />
       )}
 
-      {/* Persistent Sticky MD3 Music Player (Purple #7C3AED) */}
-      <MD3MusicPlayer />
+      {/* Persistent Sticky MD3 Music Player (Purple #7C3AED) — hidden in standalone exhibition */}
+      {route.view !== 'exhibition' && <MD3MusicPlayer />}
 
       {/* Modals */}
       <CentralWalletModal isOpen={showCentralCard} onClose={() => setShowCentralCard(false)} />
