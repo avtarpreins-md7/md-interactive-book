@@ -18,6 +18,8 @@ interface LibraryViewProps {
   onOpenBookReader: (bookId: string) => void;
   onOpenReviewForBook: (bookId: string) => void;
   onOpenCentralCard: () => void;
+  isAuthorUnlocked?: boolean;
+  onOpenAuthorModal?: () => void;
 }
 
 export const LibraryView: React.FC<LibraryViewProps> = ({
@@ -26,6 +28,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onOpenBookReader,
   onOpenReviewForBook,
   onOpenCentralCard,
+  isAuthorUnlocked = false,
+  onOpenAuthorModal,
 }) => {
   const { books, purchasedBookIds, purchaseBook, coins, reviews } = useUnifiedPlatform();
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +47,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   });
 
   const handleBuyOrOpen = (book: PlatformBookItem) => {
+    if (book.isBuiltInNoon) {
+      if (isAuthorUnlocked) {
+        onOpenBookReader(book.id);
+      } else {
+        onOpenAuthorModal?.();
+      }
+      return;
+    }
     if (purchasedBookIds.includes(book.id)) {
       onOpenBookReader(book.id);
       return;
@@ -149,7 +161,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   <div className="flex items-start gap-4">
                     <button
                       type="button"
-                      onClick={() => onOpenBookHolder(book.id)}
+                      onClick={() => {
+                        if (book.isBuiltInNoon && !isAuthorUnlocked) onOpenAuthorModal?.();
+                        else onOpenBookHolder(book.id);
+                      }}
                       className="w-24 sm:w-28 aspect-[5/7] rounded-xl overflow-hidden border-2 border-[#C89D54] bg-[#16100A] shrink-0 relative cursor-pointer"
                     >
                       <img
@@ -200,7 +215,17 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                       onClick={() => handleBuyOrOpen(book)}
                       className="col-span-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#6D4C24] to-[#4A3219] text-[#FBF6EE] text-xs sm:text-sm font-extrabold flex items-center justify-center gap-1.5 hover:brightness-110 cursor-pointer"
                     >
-                      {isOwned ? (
+                      {book.isBuiltInNoon && !isAuthorUnlocked ? (
+                        <>
+                          <Sparkles className="w-4 h-4 text-[#F5D68E]" />
+                          <span>مقفول · عرض خاص بالمؤلف فقط</span>
+                        </>
+                      ) : book.isBuiltInNoon && isAuthorUnlocked ? (
+                        <>
+                          <BookOpen className="w-4 h-4 text-[#F5D68E]" />
+                          <span>عرض كتابي (وضع المؤلف)</span>
+                        </>
+                      ) : isOwned ? (
                         <>
                           <BookOpen className="w-4 h-4 text-[#F5D68E]" />
                           <span>اقرأ الكتاب الآن</span>
@@ -226,11 +251,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   {book.isBuiltInNoon && (
                     <button
                       type="button"
-                      onClick={() => onOpenBookHolder(book.id)}
+                      onClick={() => {
+                        if (!isAuthorUnlocked) onOpenAuthorModal?.();
+                        else onOpenBookHolder(book.id);
+                      }}
                       className="w-full py-2 rounded-lg border border-[#C89D54] bg-[#F5ECE0] text-xs font-bold text-[#6D4C24] hover:bg-[#EADBC6] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Compass className="w-3.5 h-3.5" />
-                      <span>دخول منصة الغلاف وبحر نون التفاعلي</span>
+                      <span>
+                        {isAuthorUnlocked ? 'دخول منصة الغلاف وبحر نون التفاعلي' : 'دخول المؤلف لفتح كتاب نون'}
+                      </span>
                     </button>
                   )}
                 </article>

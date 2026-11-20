@@ -1,5 +1,13 @@
-import { ExhibitionBook } from '../types';
+import { ExhibitionBook, BookPaymentReceivingInfo } from '../types';
 import { NOON_MANIFEST, getBookChapters } from '../books/registry';
+
+export const DEFAULT_PAYMENT_RECEIVING_INFO: BookPaymentReceivingInfo = {
+  walletNumber: '01000000000',
+  instapayAddress: 'mdbooks@instapay',
+  bankAccountInfo: 'البنك الأهلي المصري — حساب: 12345678901234',
+  externalPlatformName: 'منصة الدفع المباشر',
+  externalPlatformUrl: 'https://pay.md-exhibition.example/checkout',
+};
 
 function buildNoonSamplePages(): string[] {
   const chapters = getBookChapters('noon', false);
@@ -9,9 +17,7 @@ function buildNoonSamplePages(): string[] {
     pages.push(joined);
     if (pages.length >= 15) break;
   }
-  return pages.length > 0
-    ? pages
-    : [NOON_MANIFEST.description];
+  return pages.length > 0 ? pages : [NOON_MANIFEST.description];
 }
 
 export const INITIAL_EXHIBITION_BOOKS: ExhibitionBook[] = [
@@ -20,31 +26,30 @@ export const INITIAL_EXHIBITION_BOOKS: ExhibitionBook[] = [
     title: 'كتاب نون',
     author: 'محمد الهمام',
     description:
-      'النسخة الكاملة غير المختصرة: رحلة المعرفة وكشف الحقائق، قصة الأمير والعبور الأبدي، سر الرقم 7، الماتريكس والديجافو، وهرم النيلام وبوابة الوعي.',
+      'النسخة الكاملة المحفوظة للمؤلف فقط — غير متاحة للعرض العام وتُفتح حصرياً بدخول المؤلف الخاص.',
     cover: '/books/noon/cover.png',
     rating: 4.9,
     ratingsCount: 142,
     pageCount: 120,
     isFreeShowcase: false,
-    pricePoints: 120,
-    priceEgpHint: 12,
-    category: 'فلسفة ومعرفة',
+    priceEgp: 0,
+    category: 'إصدار خاص بالمؤلف',
     isBuiltInNoon: true,
+    isAuthorLocked: true,
     samplePages: buildNoonSamplePages(),
   },
   {
     id: 'showcase-free-noon-intro',
-    title: 'المدخل إلى خيال المعرفة (نموذج عرض مجاني)',
+    title: 'المدخل إلى خيال المعرفة (عرض مجاني)',
     author: 'محمد الهمام',
     description:
-      'إصدار مجاني للعرض داخل المعرض: يفتح بوابات التفكير النقدي والتمييز بين المعرفة الظاهرة والحقيقة العميقة، ويوضح كيفية تحويل الفكرة إلى أثر نافع.',
+      'إصدار مجاني متاح للجميع داخل المعرض: يفتح بوابات التفكير النقدي والتمييز بين المعرفة الظاهرة والحقيقة العميقة، ويوضح كيفية تحويل الفكرة إلى أثر نافع.',
     cover: '/books/noon/images/chapter1.jpg',
     rating: 4.8,
     ratingsCount: 86,
     pageCount: 24,
     isFreeShowcase: true,
-    pricePoints: 0,
-    priceEgpHint: 0,
+    priceEgp: 0,
     category: 'عرض مجاني',
     samplePages: [
       'لماذا نبدأ بالسؤال؟ السؤال الصادق هو المفتاح الأول لكل طريق طويل.',
@@ -72,9 +77,10 @@ export const INITIAL_EXHIBITION_BOOKS: ExhibitionBook[] = [
     ratingsCount: 64,
     pageCount: 96,
     isFreeShowcase: false,
-    pricePoints: 90,
-    priceEgpHint: 9,
+    priceEgp: 75,
     category: 'فكر وعمارة',
+    acceptedMethods: ['wallet', 'instapay', 'bank', 'external_platform'],
+    paymentInfo: DEFAULT_PAYMENT_RECEIVING_INFO,
     samplePages: Array.from({ length: 14 }, (_, i) =>
       `الباب ${i + 1} — عالم الانعكاسات والنظام:\n\nيتأمل هذا القسم في القوانين الدقيقة التي تحكم حركة الأنماط المتكررة في الطبيعة والعمارة والوعي البشري، وكيف يلتقط العقل الإشارات الهندسية في التفاصيل الصامتة.`
     ),
@@ -90,9 +96,10 @@ export const INITIAL_EXHIBITION_BOOKS: ExhibitionBook[] = [
     ratingsCount: 53,
     pageCount: 112,
     isFreeShowcase: false,
-    pricePoints: 150,
-    priceEgpHint: 15,
+    priceEgp: 120,
     category: 'تاريخ وعلوم',
+    acceptedMethods: ['wallet', 'instapay', 'bank', 'external_platform'],
+    paymentInfo: DEFAULT_PAYMENT_RECEIVING_INFO,
     samplePages: Array.from({ length: 14 }, (_, i) =>
       `المبحث ${i + 1} — طريق المستقبل والضوء:\n\nنستعرض هنا التناغم السباعي في النغمات والطيف الضوئي والأسابيع الزمنية، وكيف تتحول المحطات التاريخية إلى نقاط انطلاق لبناء مستقبل أكثر اتزاناً.`
     ),
@@ -108,9 +115,10 @@ export const INITIAL_EXHIBITION_BOOKS: ExhibitionBook[] = [
     ratingsCount: 79,
     pageCount: 140,
     isFreeShowcase: false,
-    pricePoints: 180,
-    priceEgpHint: 18,
+    priceEgp: 150,
     category: 'تكنولوجيا ومستقبل',
+    acceptedMethods: ['wallet', 'instapay', 'bank', 'external_platform'],
+    paymentInfo: DEFAULT_PAYMENT_RECEIVING_INFO,
     samplePages: Array.from({ length: 14 }, (_, i) =>
       `المبحث ${i + 1} — هرم النيلام:\n\nيصف هذا القسم البنية الهندسية المزدوجة للهرم الزجاجي، وآليات دمج الإضاءة الطبيعية مع العروض التفاعلية لخلق مساحة معرفة حية للزوار.`
     ),
@@ -126,9 +134,10 @@ export const INITIAL_EXHIBITION_BOOKS: ExhibitionBook[] = [
     ratingsCount: 91,
     pageCount: 84,
     isFreeShowcase: false,
-    pricePoints: 110,
-    priceEgpHint: 11,
+    priceEgp: 95,
     category: 'ذكاء اصطناعي',
+    acceptedMethods: ['wallet', 'instapay', 'bank', 'external_platform'],
+    paymentInfo: DEFAULT_PAYMENT_RECEIVING_INFO,
     samplePages: Array.from({ length: 14 }, (_, i) =>
       `القسم ${i + 1} — الممر الرقمي:\n\nكيف يوجّه الإنسان الخوارزميات لصناعة كتب وتطبيقات ذات أثر نافع دون أن يفقد بصمته الروحية والأخلاقية؟ هنا تتضح ملامح الشراكة الواعية.`
     ),

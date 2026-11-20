@@ -18,6 +18,8 @@ interface PublisherPortalProps {
   onOpenCentralCard: () => void;
   onOpenBookReader: (bookId: string) => void;
   onOpenMailPublishModal: () => void;
+  isAuthorUnlocked?: boolean;
+  onOpenAuthorModal?: () => void;
 }
 
 export const PublisherPortal: React.FC<PublisherPortalProps> = ({
@@ -25,6 +27,8 @@ export const PublisherPortal: React.FC<PublisherPortalProps> = ({
   onOpenCentralCard,
   onOpenBookReader,
   onOpenMailPublishModal,
+  isAuthorUnlocked = false,
+  onOpenAuthorModal,
 }) => {
   const {
     account,
@@ -259,7 +263,7 @@ export const PublisherPortal: React.FC<PublisherPortalProps> = ({
                 ))}
               </div>
               <p className="text-[11px] text-center text-[#DFC49A]">
-                يتخصم 1 نقطة على كل عملية
+                دعم مباشر بالكامل للناشر والمؤلف
               </p>
 
               {giftNotice && (
@@ -323,11 +327,14 @@ export const PublisherPortal: React.FC<PublisherPortalProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onOpenBookReader(b.id)}
+                  onClick={() => {
+                    if (b.isBuiltInNoon && !isAuthorUnlocked) onOpenAuthorModal?.();
+                    else onOpenBookReader(b.id);
+                  }}
                   className="px-3 py-2 rounded-lg bg-[#6D4C24] text-[#FBF6EE] text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>فتح</span>
+                  <span>{b.isBuiltInNoon && !isAuthorUnlocked ? 'مقفول للمؤلف' : 'فتح'}</span>
                 </button>
               </div>
             ))}

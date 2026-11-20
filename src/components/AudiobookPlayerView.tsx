@@ -10,7 +10,6 @@ import {
   ZoomIn,
   ZoomOut,
   Lock,
-  Coins,
   ShoppingBag,
   Sparkles,
   RotateCcw,
@@ -207,11 +206,9 @@ export function loadSavedAudiobookResume(bookId?: string): AudiobookResumeState 
 interface AudiobookPlayerViewProps {
   book: ExhibitionBook;
   isOwned: boolean;
-  mdPoints: number;
   freeSecondsUsed: number;
   onTickFreeSecond: () => void;
-  onPurchaseWithPoints: (book: ExhibitionBook) => boolean;
-  onOpenBuy1000Points: () => void;
+  onRequestPaidPurchase: (book: ExhibitionBook) => void;
   onClose: () => void;
   autoPlayOnOpen?: boolean;
 }
@@ -219,11 +216,9 @@ interface AudiobookPlayerViewProps {
 export const AudiobookPlayerView: React.FC<AudiobookPlayerViewProps> = ({
   book,
   isOwned,
-  mdPoints,
   freeSecondsUsed,
   onTickFreeSecond,
-  onPurchaseWithPoints,
-  onOpenBuy1000Points,
+  onRequestPaidPurchase,
   onClose,
   autoPlayOnOpen = true,
 }) => {
@@ -434,7 +429,7 @@ export const AudiobookPlayerView: React.FC<AudiobookPlayerViewProps> = ({
   useEffect(() => {
     if (isPaywallLocked && isPlaying) {
       stopAllEngines(false);
-      setStatusNotice('انتهت الدقائق العشر المجانية — اشترِ الكتاب بالنقاط لإكمال السماع.');
+      setStatusNotice('انتهت الدقائق العشر المجانية — اشترِ الكتاب لإكمال السماع.');
     }
   }, [isPaywallLocked, isPlaying, stopAllEngines]);
 
@@ -998,49 +993,29 @@ export const AudiobookPlayerView: React.FC<AudiobookPlayerViewProps> = ({
                 انتهت الدقائق العشر المجانية للاستماع
               </h3>
               <p className="text-sm text-slate-200 leading-relaxed">
-                لإكمال سماع «{book.title}» من صفحة {pageIndex + 1}، اشتريه الآن بنقاط MD ليُفتح لك بالكامل قراءةً واستماعاً.
+                لإكمال سماع «{book.title}» من صفحة {pageIndex + 1}، اشتريه الآن ليُفتح لك بالكامل قراءةً واستماعاً.
               </p>
             </div>
 
             <div className="max-w-sm mx-auto p-4 rounded-2xl bg-[#05070E] border border-[#D4AF37]/40 space-y-1 text-sm tabular-nums">
               <div className="flex justify-between">
                 <span className="text-slate-400">سعر الكتاب:</span>
-                <span className="font-black text-[#F3E5AB]">{book.pricePoints} نقطة MD</span>
+                <span className="font-black text-[#F3E5AB]">{book.priceEgp} ج.م</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">رصيدك الحالي:</span>
-                <span className="font-black text-white">{mdPoints} نقطة MD</span>
+              <div className="text-[11px] text-slate-400 pt-1">
+                طرق الدفع المتاحة: محفظة · إنستاباي · حساب بنكي · منصة دفع أخرى
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              {mdPoints >= book.pricePoints ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ok = onPurchaseWithPoints(book);
-                    if (ok) {
-                      setTimeout(
-                        () => startPlaybackAt(pageIndex, activeWordIndex, undefined, undefined, undefined, true),
-                        100
-                      );
-                    }
-                  }}
-                  className="min-h-[48px] px-6 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-[#05070E] font-black text-sm flex items-center gap-2 cursor-pointer shadow-lg"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>شراء الكتاب بالنقاط ({book.pricePoints} نقطة MD) وإكمال السماع</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onOpenBuy1000Points}
-                  className="min-h-[48px] px-6 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-[#05070E] font-black text-sm flex items-center gap-2 cursor-pointer shadow-lg"
-                >
-                  <Coins className="w-4 h-4" />
-                  <span>رصيدك لا يكفي — اشتري 1000 نقطة الأول</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => onRequestPaidPurchase(book)}
+                className="min-h-[48px] px-6 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-[#05070E] font-black text-sm flex items-center gap-2 cursor-pointer shadow-lg"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>شراء الكتاب ({book.priceEgp} ج.م) وإكمال السماع</span>
+              </button>
             </div>
           </div>
         ) : (

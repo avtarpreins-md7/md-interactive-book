@@ -81,7 +81,7 @@ const LiveGiftToast: React.FC = () => {
           <div className="font-black text-[#F5D68E]">إشعار بث مباشر · هدية دعم فوري</div>
           <div>
             أرسل <strong>{liveGiftEvent.supporterName}</strong> هدية{' '}
-            <strong className="text-[#F5D68E]">{liveGiftEvent.coins} عملات</strong> (بدون عمولة · -1 نقطة تقدم)
+            <strong className="text-[#F5D68E]">{liveGiftEvent.coins} عملات</strong> (بدون عمولة)
           </div>
         </div>
       </div>
@@ -147,7 +147,9 @@ const AppShell: React.FC = () => {
       sessionStorage.setItem('noon_author_token', token);
     } catch {}
     setIsAuthorPreview(true);
-    setHashRoute('/book/noon/read/1');
+    if (route.view !== 'exhibition') {
+      setHashRoute('/book/noon/read/1');
+    }
   };
 
   const handleExitAuthorPreview = () => {
@@ -206,6 +208,7 @@ const AppShell: React.FC = () => {
           onOpenAppsModal={() => setShowAppsModal(true)}
           onOpenAuthorModal={() => setShowAuthorModal(true)}
           onNavigateExhibition={() => setHashRoute('/exhibition')}
+          isAuthorUnlocked={isAuthorPreview}
         />
       )}
 
@@ -217,7 +220,12 @@ const AppShell: React.FC = () => {
             }
             setHashRoute('/');
           }}
-          onOpenFullNoonReader={() => setHashRoute('/book/noon/read/1')}
+          onOpenFullNoonReader={() => {
+            if (isAuthorPreview) setHashRoute('/book/noon/read/1');
+            else setShowAuthorModal(true);
+          }}
+          isAuthorUnlocked={isAuthorPreview}
+          onRequestAuthorUnlock={() => setShowAuthorModal(true)}
         />
       )}
 
@@ -228,6 +236,8 @@ const AppShell: React.FC = () => {
           onOpenBookReader={(bookId) => setHashRoute(`/book/${bookId}/read/1`)}
           onOpenReviewForBook={(bookId) => setReviewTargetBookId(bookId)}
           onOpenCentralCard={() => setShowCentralCard(true)}
+          isAuthorUnlocked={isAuthorPreview}
+          onOpenAuthorModal={() => setShowAuthorModal(true)}
         />
       )}
 
@@ -237,56 +247,101 @@ const AppShell: React.FC = () => {
           onOpenCentralCard={() => setShowCentralCard(true)}
           onOpenBookReader={(bookId) => setHashRoute(`/book/${bookId}/read/1`)}
           onOpenMailPublishModal={() => setShowPublishModal(true)}
+          isAuthorUnlocked={isAuthorPreview}
+          onOpenAuthorModal={() => setShowAuthorModal(true)}
         />
       )}
 
-      {route.view === 'pedestal' && (
-        <BookHolder
-          onOpenBook={() => setHashRoute(`/book/${route.bookId}/read/1`)}
-          onBackHome={() => setHashRoute('/')}
-          onOpenOcean={() => setHashRoute(`/book/${route.bookId}/ocean`)}
-          onOpenAppsModal={() => setShowAppsModal(true)}
-        />
-      )}
+      {(route.view === 'pedestal' ||
+        route.view === 'ocean' ||
+        route.view === 'reader' ||
+        route.view === 'completion' ||
+        route.view === 'audit') &&
+      route.bookId === 'noon' &&
+      !isAuthorPreview ? (
+        <div
+          dir="rtl"
+          className="min-h-screen w-full bg-[#05070E] text-white flex items-center justify-center p-4"
+        >
+          <div className="max-w-md w-full rounded-2xl p-6 sm:p-8 bg-[#0B1633] border-2 border-[#D4AF37] text-center space-y-4 shadow-2xl">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#05070E] border-2 border-[#D4AF37] flex items-center justify-center text-[#D4AF37] text-2xl font-black">
+              ن
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-[#F3E5AB]">
+              كتاب «نون» مقفول — خاص بالمؤلف فقط
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              هذا الكتاب محفوظ للعرض الخاص بالمؤلف محمد الهمام فقط، ولا يُفتح للزوار العامين.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAuthorModal(true)}
+                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#05070E] font-black text-xs sm:text-sm cursor-pointer"
+              >
+                دخول المؤلف لعرض الكتاب
+              </button>
+              <button
+                type="button"
+                onClick={() => setHashRoute('/exhibition')}
+                className="py-3 px-4 rounded-xl bg-[#05070E] border border-[#D4AF37]/50 text-[#F3E5AB] font-bold text-xs sm:text-sm cursor-pointer"
+              >
+                العودة للمعرض
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {route.view === 'pedestal' && (
+            <BookHolder
+              onOpenBook={() => setHashRoute(`/book/${route.bookId}/read/1`)}
+              onBackHome={() => setHashRoute('/')}
+              onOpenOcean={() => setHashRoute(`/book/${route.bookId}/ocean`)}
+              onOpenAppsModal={() => setShowAppsModal(true)}
+            />
+          )}
 
-      {route.view === 'ocean' && (
-        <GoldenOceanScene
-          onEnterJourney={() => setHashRoute(`/book/${route.bookId}`)}
-          onOpenAppsModal={() => setShowAppsModal(true)}
-          onOpenPublishModal={() => setShowPublishModal(true)}
-        />
-      )}
+          {route.view === 'ocean' && (
+            <GoldenOceanScene
+              onEnterJourney={() => setHashRoute(`/book/${route.bookId}`)}
+              onOpenAppsModal={() => setShowAppsModal(true)}
+              onOpenPublishModal={() => setShowPublishModal(true)}
+            />
+          )}
 
-      {route.view === 'reader' && (
-        <BookReader
-          bookId={route.bookId}
-          initialPage={route.page}
-          onCloseBook={() => setHashRoute(`/book/${route.bookId}`)}
-          onFinishJourney={() => setHashRoute(`/book/${route.bookId}/completion`)}
-          onPageChange={handleReaderPageChange}
-          onOpenAudit={() => setHashRoute(`/book/${route.bookId}/audit`)}
-          reviews={reviews}
-          onAddReview={(name, rating, comment) => addReview(route.bookId, name, rating, comment)}
-          onOpenAppsModal={() => setShowAppsModal(true)}
-          onOpenPublishModal={() => setShowPublishModal(true)}
-        />
-      )}
+          {route.view === 'reader' && (
+            <BookReader
+              bookId={route.bookId}
+              initialPage={route.page}
+              onCloseBook={() => setHashRoute(`/book/${route.bookId}`)}
+              onFinishJourney={() => setHashRoute(`/book/${route.bookId}/completion`)}
+              onPageChange={handleReaderPageChange}
+              onOpenAudit={() => setHashRoute(`/book/${route.bookId}/audit`)}
+              reviews={reviews}
+              onAddReview={(name, rating, comment) => addReview(route.bookId, name, rating, comment)}
+              onOpenAppsModal={() => setShowAppsModal(true)}
+              onOpenPublishModal={() => setShowPublishModal(true)}
+            />
+          )}
 
-      {route.view === 'completion' && (
-        <CompletionScreen
-          onRestart={() => setHashRoute(`/book/${route.bookId}/read/1`)}
-          onOpenReviewModal={() => setReviewTargetBookId(route.bookId)}
-          onBackHome={() => setHashRoute('/')}
-          onOpenAppsModal={() => setShowAppsModal(true)}
-          onOpenPublishModal={() => setShowPublishModal(true)}
-        />
-      )}
+          {route.view === 'completion' && (
+            <CompletionScreen
+              onRestart={() => setHashRoute(`/book/${route.bookId}/read/1`)}
+              onOpenReviewModal={() => setReviewTargetBookId(route.bookId)}
+              onBackHome={() => setHashRoute('/')}
+              onOpenAppsModal={() => setShowAppsModal(true)}
+              onOpenPublishModal={() => setShowPublishModal(true)}
+            />
+          )}
 
-      {route.view === 'audit' && (
-        <BookAuditView
-          onBack={() => setHashRoute('/book/noon/read/1')}
-          onOpenReaderAtChapter={(p) => setHashRoute(`/book/noon/read/${p}`)}
-        />
+          {route.view === 'audit' && (
+            <BookAuditView
+              onBack={() => setHashRoute('/book/noon/read/1')}
+              onOpenReaderAtChapter={(p) => setHashRoute(`/book/noon/read/${p}`)}
+            />
+          )}
+        </>
       )}
 
       {/* Persistent Sticky MD3 Music Player (Purple #7C3AED) — hidden in standalone exhibition */}

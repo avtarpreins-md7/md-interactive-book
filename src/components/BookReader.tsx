@@ -569,7 +569,7 @@ export const BookReader: React.FC<BookReaderProps> = ({
                       <Gift className="w-4 h-4" />
                       <span>ادعم الكاتب بهدية بث مباشر (بدون أي عمولة)</span>
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5">يتخصم 1 نقطة على كل عملية</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">دعم مباشر للكاتب بدون أي عمولة</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {([3, 6, 9] as const).map((amt) => (

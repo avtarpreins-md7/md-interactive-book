@@ -182,6 +182,26 @@ export interface BookManifest {
   }[];
 }
 
+export type BookPaymentMethod = 'wallet' | 'instapay' | 'bank' | 'external_platform';
+
+export interface BookPaymentReceivingInfo {
+  walletNumber?: string;
+  instapayAddress?: string;
+  bankAccountInfo?: string;
+  externalPlatformName?: string;
+  externalPlatformUrl?: string;
+}
+
+export interface BookPurchaseReceipt {
+  id: string;
+  bookId: string;
+  bookTitle: string;
+  amountEgp: number;
+  method: BookPaymentMethod;
+  reference: string;
+  paidAt: string;
+}
+
 export interface ExhibitionBook {
   id: string;
   title: string;
@@ -192,10 +212,12 @@ export interface ExhibitionBook {
   ratingsCount: number;
   pageCount: number;
   isFreeShowcase: boolean;
-  pricePoints: number;
-  priceEgpHint: number;
+  priceEgp: number;
   category: string;
   isBuiltInNoon?: boolean;
+  isAuthorLocked?: boolean;
+  acceptedMethods?: BookPaymentMethod[];
+  paymentInfo?: BookPaymentReceivingInfo;
   samplePages: string[];
   publishedByUser?: boolean;
 }

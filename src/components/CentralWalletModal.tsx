@@ -33,7 +33,6 @@ export const CentralWalletModal: React.FC<CentralWalletModalProps> = ({ isOpen, 
   const {
     coins,
     egpEquivalent,
-    progressPoints,
     connectedPlatformsCount,
     transactionsCount,
     transactions,
@@ -173,11 +172,11 @@ export const CentralWalletModal: React.FC<CentralWalletModalProps> = ({ isOpen, 
           </div>
 
           <div className="p-3 rounded-xl bg-white border border-[#D4B88C] shadow-xs">
-            <div className="text-[11px] text-[#6D4C24] font-semibold">تصنيف تقدمك</div>
+            <div className="text-[11px] text-[#6D4C24] font-semibold">تصنيف حسابك</div>
             <div className="text-sm font-black text-[#2C1D11]">
               المرتبة {centralRankNumber} - {centralRankTitle}
             </div>
-            <div className="text-[10px] text-[#8C6418]">نقاط التقدم: {progressPoints}</div>
+            <div className="text-[10px] text-[#8C6418]">حساب موحد نشط</div>
           </div>
         </div>
 
@@ -352,7 +351,6 @@ export const CentralWalletModal: React.FC<CentralWalletModalProps> = ({ isOpen, 
                   <Radio className="w-4 h-4 text-[#F5D68E]" />
                   <span>هدايا البث المباشر والدعم (بدون عمولة مخفية)</span>
                 </h4>
-                <span className="text-[10px] text-[#E3C896]">نقاط التقدم: {progressPoints}</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2.5 my-3">
@@ -370,7 +368,7 @@ export const CentralWalletModal: React.FC<CentralWalletModalProps> = ({ isOpen, 
               </div>
 
               <p className="text-center text-xs text-[#F5D68E] font-bold">
-                يتخصم 1 نقطة على كل عملية
+                دعم مباشر بالكامل للمؤلف والناشر
               </p>
             </div>
 

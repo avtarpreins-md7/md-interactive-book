@@ -29,6 +29,7 @@ interface BookPlatformHomeProps {
   onOpenAppsModal: () => void;
   onOpenAuthorModal: () => void;
   onNavigateExhibition?: () => void;
+  isAuthorUnlocked?: boolean;
 }
 
 export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
@@ -42,6 +43,7 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
   onOpenAppsModal,
   onOpenAuthorModal,
   onNavigateExhibition,
+  isAuthorUnlocked = false,
 }) => {
   const {
     account,
@@ -62,7 +64,17 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
   const featuredBooks = books.filter((b) => b.isFeatured).slice(0, 3);
   const primaryBook: PlatformBookItem = featuredBooks[0] || books[0];
 
+  const isPrimaryNoonLocked = Boolean(primaryBook?.isBuiltInNoon && !isAuthorUnlocked);
+
   const handleBookPurchaseOrOpen = (book: PlatformBookItem) => {
+    if (book.isBuiltInNoon && !isAuthorUnlocked) {
+      onOpenAuthorModal();
+      return;
+    }
+    if (book.isBuiltInNoon && isAuthorUnlocked) {
+      onOpenBookReader(book.id);
+      return;
+    }
     const isOwned = purchasedBookIds.includes(book.id);
     if (isOwned) {
       onOpenBookReader(book.id);
@@ -325,9 +337,12 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
                 {/* Right: Cover Thumbnail (5:7) */}
                 <button
                   type="button"
-                  onClick={() => onOpenBookHolder(primaryBook.id)}
+                  onClick={() => {
+                    if (isPrimaryNoonLocked) onOpenAuthorModal();
+                    else onOpenBookHolder(primaryBook.id);
+                  }}
                   className="w-24 sm:w-28 aspect-[5/7] rounded-xl overflow-hidden border-2 border-[#C89D54] bg-[#16100A] shadow-md shrink-0 relative group cursor-pointer"
-                  title="معاينة غلاف وتجربة كتاب نون"
+                  title={isPrimaryNoonLocked ? 'كتاب نون مقفول — عرض خاص بالمؤلف فقط' : 'معاينة غلاف وتجربة كتاب نون'}
                 >
                   <img
                     src={primaryBook.cover}
@@ -335,11 +350,13 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent flex flex-col justify-end p-2 text-center">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-2 text-center">
                     <span className="font-editorial text-lg font-black text-[#F5D68E] leading-none">
                       «نون»
                     </span>
-                    <span className="text-[9px] text-amber-100/90 mt-0.5">{primaryBook.author}</span>
+                    <span className="text-[9px] text-amber-100/90 mt-0.5">
+                      {isPrimaryNoonLocked ? 'مقفول للمؤلف فقط' : primaryBook.author}
+                    </span>
                   </div>
                 </button>
 
@@ -351,11 +368,14 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
                     </h3>
                     <button
                       type="button"
-                      onClick={() => onOpenBookHolder(primaryBook.id)}
+                      onClick={() => {
+                        if (isPrimaryNoonLocked) onOpenAuthorModal();
+                        else onOpenBookHolder(primaryBook.id);
+                      }}
                       className="text-xs font-bold text-[#6D4C24] hover:underline cursor-pointer flex items-center gap-1"
                     >
                       <Headphones className="w-3.5 h-3.5" />
-                      <span>معاينة وتجربة</span>
+                      <span>{isPrimaryNoonLocked ? 'دخول المؤلف' : 'عرض للمؤلف'}</span>
                     </button>
                   </div>
 
@@ -364,14 +384,9 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
                   </p>
 
                   <div className="text-xs font-bold text-[#6D4C24] py-0.5">
-                    كتاب داخل المنصة · التقييم: {primaryRating.avg} ★ ({primaryRating.count} تقييم)
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1 text-sm font-extrabold text-[#3B2514]">
-                    <Coins className="w-5 h-5 text-[#B68B46] shrink-0" />
-                    <span className="tabular-nums">
-                      السعر: {primaryBook.priceCoins} عملة / العملات المركزية
-                    </span>
+                    {isPrimaryNoonLocked
+                      ? 'كتاب مقفول — خاص بالعرض الشخصي للمؤلف فقط'
+                      : `مفتوح للمؤلف · التقييم: ${primaryRating.avg} ★ (${primaryRating.count} تقييم)`}
                   </div>
                 </div>
               </div>
@@ -392,15 +407,15 @@ export const BookPlatformHome: React.FC<BookPlatformHomeProps> = ({
                   onClick={() => handleBookPurchaseOrOpen(primaryBook)}
                   className="py-2.5 px-4 rounded-xl bg-[#FAF4EC] border-2 border-[#B68B46] text-[#3B2514] font-extrabold text-sm flex items-center justify-center gap-2 hover:bg-[#EFE2CF] cursor-pointer"
                 >
-                  {purchasedBookIds.includes(primaryBook.id) ? (
+                  {isPrimaryNoonLocked ? (
                     <>
-                      <BookOpen className="w-4 h-4 text-[#6D4C24]" />
-                      <span>اقرأ الآن</span>
+                      <ShieldCheck className="w-4 h-4 text-[#6D4C24]" />
+                      <span>مقفول · للمؤلف فقط</span>
                     </>
                   ) : (
                     <>
-                      <Star className="w-4 h-4 text-[#B68B46]" />
-                      <span>شراء</span>
+                      <BookOpen className="w-4 h-4 text-[#6D4C24]" />
+                      <span>عرض كتابي</span>
                     </>
                   )}
                 </button>

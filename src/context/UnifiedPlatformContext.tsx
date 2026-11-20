@@ -343,16 +343,15 @@ export const UnifiedPlatformProvider: React.FC<{ children: React.ReactNode }> = 
         id: `tx-${Date.now()}`,
         type: 'purchase_book',
         platform: 'book',
-        title: `شراء «${targetBook.title}» (-${targetBook.priceCoins} عملة · -1 نقطة تقدم)`,
+        title: `شراء «${targetBook.title}» (${targetBook.priceCoins} عملة)`,
         coinsDelta: -targetBook.priceCoins,
-        pointsDelta: -1,
+        pointsDelta: 0,
         timestamp: 'الآن',
         status: 'مكتمل',
       };
       setState((prev) => ({
         ...prev,
         coins: prev.coins - targetBook.priceCoins,
-        progressPoints: Math.max(0, prev.progressPoints - 1),
         transactionsCount: prev.transactionsCount + 1,
         transactions: [tx, ...prev.transactions],
         purchasedBookIds: [...prev.purchasedBookIds, bookId],
@@ -362,7 +361,7 @@ export const UnifiedPlatformProvider: React.FC<{ children: React.ReactNode }> = 
       audioEngine.playGoldenChime();
       return {
         success: true,
-        message: `تم شراء «${targetBook.title}» بنجاح (-${targetBook.priceCoins} عملة من الرصيد المركزي، -1 نقطة تقدم).`,
+        message: `تم شراء «${targetBook.title}» بنجاح (${targetBook.priceCoins} عملة من الرصيد المركزي).`,
       };
     },
     [state.books, state.coins, state.purchasedBookIds]
@@ -383,7 +382,7 @@ export const UnifiedPlatformProvider: React.FC<{ children: React.ReactNode }> = 
         platform,
         title: `هدية بث مباشر (${coins} عملات → ${targetLabel}) · بدون عمولة`,
         coinsDelta: -coins,
-        pointsDelta: -1,
+        pointsDelta: 0,
         timestamp: 'الآن',
         status: 'مكتمل',
       };
@@ -407,7 +406,6 @@ export const UnifiedPlatformProvider: React.FC<{ children: React.ReactNode }> = 
         return {
           ...prev,
           coins: prev.coins - coins,
-          progressPoints: Math.max(0, prev.progressPoints - 1),
           transactionsCount: prev.transactionsCount + 1,
           transactions: [tx, ...prev.transactions],
           supporters: updatedSupporters,
@@ -426,7 +424,7 @@ export const UnifiedPlatformProvider: React.FC<{ children: React.ReactNode }> = 
 
       return {
         success: true,
-        message: `تم إرسال هدية ${coins} عملات بالكامل (بدون عمولة) وخصم 1 نقطة تقدم.`,
+        message: `تم إرسال هدية ${coins} عملات بالكامل (بدون عمولة).`,
       };
     },
     [state.coins, state.account.name]
